@@ -1,0 +1,437 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#"     
+     xml:base="https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#"    
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:stock="https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#"> 
+
+    <!-- Declaração da Ontologia -->
+    <owl:Ontology rdf:about="https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#">
+        <owl:versionInfo>2.0.4</owl:versionInfo> <!-- Propriedade padrão para versão -->
+        <rdfs:comment>Ontologia sobre o mercado de ações.</rdfs:comment>
+        <!-- Se você tiver imports, eles iriam aqui: <owl:imports rdf:resource="..."/> -->
+    </owl:Ontology>
+
+    <!--
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <!-- Não precisamos declarar rdfs:comment, já é padrão -->
+
+
+    <!--
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    // Definidas usando owl:ObjectProperty e rdf:about="#nomePropriedade"
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <owl:ObjectProperty rdf:about="#atuaEm">
+        <rdfs:domain rdf:resource="#Empresa"/>
+        <rdfs:range rdf:resource="#Setor_Atuacao"/>
+        <rdfs:comment>Propriedade que indica que uma empresa atua em um determinado setor econômico.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#defineIndicador">
+        <rdfs:domain rdf:resource="#Bolsa_de_Valores"/>
+        <rdfs:range rdf:resource="#Indice"/>
+        <rdfs:comment>Propriedade que indica que uma bolsa de valores define um indicador formado por um conjunto teórico de valores mobiliários.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#eListada">
+        <rdfs:domain rdf:resource="#Empresa_Capital_Aberto"/>
+        <rdfs:range rdf:resource="#Bolsa_de_Valores"/>
+        <rdfs:comment>Propriedade que indica que os valores mobiliários de uma empresa de capital aberto são negociados em uma bolsa de valores.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#negociado">
+        <rdfs:domain rdf:resource="#Valor_Mobiliario_Negociado"/>
+        <rdfs:range rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:comment>Propriedade que indica que um valor mobiliário é negociado em um determinado pregão.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#negociadoDurante">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="#Pregao"/>
+        <rdfs:comment>Pregão no qual os valores mobiliários são negociados.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#negociadoPregoes">
+        <rdfs:domain rdf:resource="#Valor_Mobiliario_Negociado"/>
+        <rdfs:range rdf:resource="#Negociado_Em_Diferentes_Pregoes"/>
+        <rdfs:comment>Propriedade que indica que um mesmo valor mobiliário é negociado em diferentes pregões.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#organiza">
+        <rdfs:domain rdf:resource="#Bolsa_de_Valores"/>
+        <rdfs:range rdf:resource="#Pregao"/>
+        <rdfs:comment>Propriedade que indica que uma bolsa de valores organiza pregão, onde ocorre a negociação de valores mobiliários.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#pregaoBase">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="#Negociado_Em_Diferentes_Pregoes"/>
+        <rdfs:range rdf:resource="#Pregao"/>
+        <rdfs:comment>Propriedade que indica que um valor mobiliario negociado em diferentes pregões tem um pregão base.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#pregaoPosterior">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="#Negociado_Em_Diferentes_Pregoes"/>
+        <rdfs:range rdf:resource="#Pregao"/>
+        <rdfs:comment>Propriedade que indica que um valor mobiliario negociado em diferentes pregões tem um pregão posterior.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#representaConjuntoDe">
+        <rdfs:domain rdf:resource="#Certificado_de_Deposito_de_Acoes"/>
+        <rdfs:range rdf:resource="#Acao"/>
+        <rdfs:comment>Propriedade que indica que um certificado de depósito de ações representa um determinado número de ações de uma empresa listada na bolsa de valores.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#representadoPor">
+        <rdfs:domain rdf:resource="#Valor_Mobiliario_Negociado"/>
+        <rdfs:range rdf:resource="#Codigo_Negociacao"/>
+        <rdfs:comment>Propriedade que indica que um determinado valor mobiliário negociado em um pregão é representado por um código de negociação.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#temIdentificacao">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="#Valor_Mobiliario"/>
+        <rdfs:range rdf:resource="#Codigo_Negociacao"/>
+        <rdfs:comment>Propriedade que indica que um valor mobiliário é identificado por um código de negociação.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#temValorMobiliarioNegociado">
+        <rdfs:domain rdf:resource="#Empresa_Capital_Aberto"/>
+        <rdfs:range rdf:resource="#Valor_Mobiliario_Negociado"/>
+        <rdfs:comment>Relacionamento que indica que uma empresa de capital aberto tem seus valores mobiliários negociados em uma bolsa de valores.</rdfs:comment>
+    </owl:ObjectProperty>
+
+    <!--
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data Properties
+    // Definidas usando owl:DatatypeProperty
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <owl:DatatypeProperty rdf:about="#horarioAbertura">
+        <rdfs:domain rdf:resource="#Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#dateTime"/>
+        <rdfs:comment>Horário de abertura de um pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#horarioFechamento">
+        <rdfs:domain rdf:resource="#Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#dateTime"/>
+        <rdfs:comment>Horário de fechamento de um pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#intervaloIntradiarioAbsoluto">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Variação intradiária entre os preços máximo e mínimo de um valor mobiliário negociado em um pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#intervaloIntradiarioPercentual">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Variação intradiária percentual ou relativa entre os preços máximo e mínimo de um valor mobiliário negociado em um pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#ocorreEmData">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="#Pregao"/>
+        <!-- O range pode ser date ou dateTime. Se usar URI para data, seria ObjectProperty -->
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/> <!-- Usando xsd:date -->
+        <rdfs:comment>Data na qual um pregão ocorre.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#precoAbertura">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Preço utilizado como base para o início das negociações do valor mobiliário no pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#precoFechamento">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Preço do valor mobiliário associado ao último negógio no pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#precoMaximo">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Maior preço negociado pelo valor mobiliário no pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#precoMedio">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/> <!-- Double parece mais apropriado que positiveInteger -->
+        <rdfs:comment>Preço médio negociado pelo valor mobilário no pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#precoMinimo">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Menor preço negociado pelo valor mobilário no pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#ticker">
+        <rdfs:domain rdf:resource="#Codigo_Negociacao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#token"/>
+        <rdfs:comment>Conjunto de letras e números que identifica um valor mobiliário negociado em uma bolsa de valores.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#totalNegocios">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#nonNegativeInteger"/>
+        <rdfs:comment>Quantidade total de negócios associados ao valor mobiliário no pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#totalTitulosNegociados">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#nonNegativeInteger"/>
+        <rdfs:comment>Quantidade total de títulos do valor mobiliários negociados no pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#variacaoAbsoluta">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="#Negociado_Em_Diferentes_Pregoes"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Variação absoluta no preço de um valor mobiliário negociado em diferentes pregões.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#variacaoIntradiariaAbsoluta">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Variação absoluta no preço de um valor mobiliário negociado, ocorrida durante um mesmo pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#variacaoIntradiariaPercentual">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Variação percentual ou relativa no preço de um valor mobiliário negociado, ocorrida durante um mesmo pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#variacaoPercentual">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="#Negociado_Em_Diferentes_Pregoes"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Variação percentual ou relativa no preço de um valor mobiliário negociado em diferentes pregões.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#volumeNegociacao">
+        <rdfs:domain rdf:resource="#Negociado_Em_Pregao"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Volume total do valor mobiliário negociado durante o pregão.</rdfs:comment>
+    </owl:DatatypeProperty>
+
+    <!--
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    // Definidas usando owl:Class e rdf:about="#nomeClasse"
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+     <!-- Declaração da Classe Base (exemplo) -->
+     <owl:Class rdf:about="#Setor_Atuacao">
+        <rdfs:comment>Setor_Atuacao representa um setor econômico em que uma empresa pode atuar.</rdfs:comment>
+     </owl:Class>
+
+     <!-- Exemplo de Subclasse -->
+     <owl:Class rdf:about="#Bens_Industriais">
+          <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/>
+          <rdfs:comment>Setor econômico que representa a produção, comercialização, construção, transporte e serviços diversos relacionados a bens industriais.</rdfs:comment>
+     </owl:Class>
+
+    <owl:Class rdf:about="#Acao"> <rdfs:subClassOf rdf:resource="#Valor_Mobiliario"/> <rdfs:comment>Acao representa a parte do capital de uma empresa.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Acessorios"> <rdfs:subClassOf rdf:resource="#Tecidos._Vestuarios_e_Calcados"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de artigos de cuidados pessoais, cutelaria, jóias, relógios e outros acessórios.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Acucar_e_Alcool"> <rdfs:subClassOf rdf:resource="#Alimentos_Processados"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de açúcar, álcool, bioenergia e outros derivados.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Aereo"> <rdfs:subClassOf rdf:resource="#Transporte"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de transporte e logística aéreos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Agricultura"> <rdfs:subClassOf rdf:resource="#Agropecuaria"/> <rdfs:comment>Setor econômico que representa a comercialização de insumos agrícolas, semestes, cereais, grãos e frutas.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Agropecuaria"> <rdfs:subClassOf rdf:resource="#Consumo_Nao_Ciclico"/> <rdfs:comment>Produção e comercialização de algodão, sementes, grãos, cereais e frutas, e comercialização de fertilizantes, defensivos biológicos e inoculantes.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Agua_e_Saneamento"> <rdfs:subClassOf rdf:resource="#Utilidade_Publica"/> <rdfs:comment>Setor econômico que representa a prestação de serviços públicos envolvendo o abastecimento de água potável, coleta e tratamento de esgoto e gestão de resíduos sólidos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Alimentos"> <rdfs:subClassOf rdf:resource="#Comercio_e_Distribuicao"/> <rdfs:comment>Setor econômico que representa a comercialização e a distribuição de alimentos, produtos de limpeza e higiene.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Alimentos_Diversos"> <rdfs:subClassOf rdf:resource="#Alimentos_Processados"/> <rdfs:comment>Setor econômico que representa a industrialização e comercialização de grãos, pescados, açúcar, massas, biscoitos, café e outros produtos derivados de trigo.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Alimentos_Processados"> <rdfs:subClassOf rdf:resource="#Consumo_Nao_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Aluguel_de_Carros"> <rdfs:subClassOf rdf:resource="#Diversos"/> <rdfs:comment>Setor econômico que representa serviços de locação de veículos e gestão de frotas.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Armas_e_Municoes"> <rdfs:subClassOf rdf:resource="#Maquinas_e_Equipamentos"/> <rdfs:comment>Setor econômico que representa a produção e comercialização de armas e munições.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Artefatos_de_Cobre"> <rdfs:subClassOf rdf:resource="#Siderurgia_e_Metalurgia"/> <rdfs:comment>Setor econômico que representa a metalurgia do cobre e suas ligas.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Artefatos_de_Ferro_e_Aco"> <rdfs:subClassOf rdf:resource="#Siderurgia_e_Metalurgia"/> <rdfs:comment>Setor econômico que representa a industrialização e comercialização de aços planos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Atividades_Esportivas"> <rdfs:subClassOf rdf:resource="#Viagens_e_Lazer"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de condicionamento físico.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Automoveis_e_Motocicletas"> <rdfs:subClassOf rdf:resource="#Consumo_Ciclico"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de de peças e componentes do setores automotivo e ferroviário.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Bancos"> <rdfs:subClassOf rdf:resource="#Intermediarios_Financeiros"/> <rdfs:comment>Setor econômico que representa a comercialização de produtos e serviços bancários.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Bebidas"> <rdfs:subClassOf rdf:resource="#Consumo_Nao_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <!-- Bens_Industriais já definida acima -->
+    <owl:Class rdf:about="#Bicicletas"> <rdfs:subClassOf rdf:resource="#Viagens_e_Lazer"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de bicicletas.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Bolsa_de_Valores"> <rdfs:comment>Bolsa de valores é uma organização que permite a negociação de valores mobiliários.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Brazilian_Depositary_Receipt"> <rdfs:subClassOf rdf:resource="#Valor_Mobiliario"/> <rdfs:comment>Brazilian_Depositary _Receipt é um certificado de depósito de ações emitido no Brasil que representa ações de empresas estrangeiras sem registro no Brasil.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Brinquedos_e_Jogos"> <rdfs:subClassOf rdf:resource="#Viagens_e_Lazer"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de brinquedos e jogos recreativos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Calcados"> <rdfs:subClassOf rdf:resource="#Tecidos._Vestuarios_e_Calcados"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de calçados e artigos esportivos e de viagem.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Carnes_e_Derivados"> <rdfs:subClassOf rdf:resource="#Alimentos_Processados"/> <rdfs:comment>Setor econômico que representa a produção e distribuição de alimentos à base de carne bovina, suína, ovina e avícola.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Certificado_de_Deposito_de_Acoes"> <rdfs:subClassOf rdf:resource="#Valor_Mobiliario"/> <rdfs:comment>Certificado_de_Deposito_de_Acoes representa a propriedade de um conjunto de ações ordinárias e/ou preferenciais de uma empresa.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Cervejas_e_Refrigerantes"> <rdfs:subClassOf rdf:resource="#Bebidas"/> <rdfs:comment>Setor econômico que representa a fabricação e distribuição de cervejas, refrigerantes e outras bebidas não carbonatadas e não alcoólicas.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Classe_A"> <rdfs:subClassOf rdf:resource="#Preferencial"/> <rdfs:comment>Ação cujo acionista recebe um mínimo de dividendos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Classe_B"> <rdfs:subClassOf rdf:resource="#Preferencial"/> <rdfs:comment>Ação cujo acionista recebe um valor pré-definido de dividendo.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Codigo_Negociacao"> <rdfs:comment>Código de negociação é um símbolo que identifica o título de valor mobiliário.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Comercio"> <rdfs:subClassOf rdf:resource="#Consumo_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Comercio_de_Eletrodomesticos"> <rdfs:subClassOf rdf:resource="#Comercio"/> <rdfs:comment>Setor econômico que representa a fabricação de eletrodomésticos e comercialização de móveis, eletrodomésticos e eletrônicos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Comercio_de_Materiais_de_Transporte"> <rdfs:subClassOf rdf:resource="#Bens_Industriais"/> <rdfs:comment>Setor econômico que representa o comércio de caminhões, ônibus, automóveis, camionetas, acessórios, máquinas e outros equipamentos de transporte.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Comercio_e_Distribuicao"> <rdfs:subClassOf rdf:resource="#Consumo_Nao_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Comercio_e_Distribuicao_de_Medicamentos_e_Outros_Produtos"> <rdfs:subClassOf rdf:resource="#Saude"/> <rdfs:comment>Setor econômico que representa a produção, comercialização e distribuição de medicamensos e de outros produtos médico-hospitalares e laboratoriais para a área da saúde.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Computadores_e_Equipamentos"> <rdfs:subClassOf rdf:resource="#Tecnologia_da_Informacao"/> <rdfs:comment>Setor econômico que representa a fabricação de equipamentos de informática.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Comunicacoes"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de telecomunicação em geral e publicidade.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Construcao_Civil"> <rdfs:subClassOf rdf:resource="#Consumo_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Construcao_Pesada"> <rdfs:subClassOf rdf:resource="#Construcao_e_Engenharia"/> <rdfs:comment>Setor econômico que representa a execução de obras de construção pesada.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Construcao_e_Agricolas"> <rdfs:subClassOf rdf:resource="#Maquinas_e_Equipamentos"/> <rdfs:comment>Setor econômico que representa a fabricação de máquinas, equipamentos, peças e acessórios para a agricultura e pecuária.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Construcao_e_Engenharia"> <rdfs:subClassOf rdf:resource="#Bens_Industriais"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Consumo_Ciclico"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a produção e comercialização de bens e serviços cuja demanda é mais sensível às condições econômicas.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Consumo_Nao_Ciclico"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a produção e comercialização de bens e serviços cuja demanda independe das condições econômicas.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Corretoras_de_Seguros_e_Resseguros"> <rdfs:subClassOf rdf:resource="#Previdencia_e_Seguros"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de corretagem e administração de seguros.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Debenture"> <rdfs:subClassOf rdf:resource="#Valor_Mobiliario"/> <rdfs:comment>Debenture é um titulo de divida emitido por uma empresa que oferece direito de credito a um investidor junto à empresa.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Diversos"> <rdfs:subClassOf rdf:resource="#Consumo_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Eletrodomesticos"> <rdfs:subClassOf rdf:resource="#Utilidades_Domesticas"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de eletrodomésticos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Embalagens"> <rdfs:subClassOf rdf:resource="#Materiais_Basicos"/> <rdfs:comment>Setor econômico que representa a fabricação de papel para embalagem, embalagens de papelão ondulado e resinas.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Empresa"> <rdfs:comment>Uma empresa é uma organização econômica que explora um ramo de negócio e oferece bens e/ou serviços.</rdfs:comment> <rdfs:subClassOf> <owl:Restriction> <owl:onProperty rdf:resource="#atuaEm"/> <owl:minCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minCardinality> </owl:Restriction> </rdfs:subClassOf> </owl:Class>
+    <owl:Class rdf:about="#Empresa_Capital_Aberto"> <rdfs:subClassOf rdf:resource="#Empresa"/> <rdfs:comment>Empresa de capital aberto é uma empresa que possui ações que podem ser negociadas em uma bolsa de valores.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Energia_Eletrica"> <rdfs:subClassOf rdf:resource="#Utilidade_Publica"/> <rdfs:comment>Setor econômico que representa prestação de serviços públicos envolvendo a geração, transmissão, comercialização e distribuição de energia elétrica.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Engenharia_Consultiva"> <rdfs:subClassOf rdf:resource="#Construcao_e_Engenharia"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de engenharia.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Equipamentos"> <rdfs:subClassOf rdf:resource="#Saude"/> <rdfs:comment>Setor econômico que representa a fabricação de aparelhos, instrumentos não eletronicos e utensilios para uso médico-hospitalar, odontológico e laboratorial.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Equipamentos_e_Servicos"> <rdfs:subClassOf rdf:resource="#Petroleo_Gas_e_Biocombustivel"/> <rdfs:comment>Setor econômico que representa a produção de equipamentos e comercialização de serviços para o setor de petróleo, gás natural e biocombustíveis.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Exploracao_Refino_e_Distribuicao"> <rdfs:subClassOf rdf:resource="#Petroleo_Gas_e_Biocombustivel"/> <rdfs:comment>Setor econômico que representa a extração, refino e distribuição de petróleo, gás natural e biocombustíveis.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Exploracao_de_Imoveis"> <rdfs:subClassOf rdf:resource="#Financeiro"/> <rdfs:comment>Setor econômico que representa a compra, venda e aluguel imóveis e a administração de shopping centers e outros empreendimentos imobiliários.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Exploracao_de_Rodovias"> <rdfs:subClassOf rdf:resource="#Transporte"/> <rdfs:comment>Setor econômico que representa a exploração de rodovias sob concessão.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Ferroviario"> <rdfs:subClassOf rdf:resource="#Transporte"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de armazenagem e transporte de carga por meio de ferrovias.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Fertilizantes_e_Defensivos"> <rdfs:subClassOf rdf:resource="#Quimico"/> <rdfs:comment>Setor econômico que representa a produção, comercialização e distribuição de fertilizantes e defensivos biológicos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Financeiro"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a comercialização de produtos e serviços financeiros.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Fios_e_Tecidos"> <rdfs:subClassOf rdf:resource="#Tecidos._Vestuarios_e_Calcados"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de fios, tecidos e produtos têxteis em geral.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Gas"> <rdfs:subClassOf rdf:resource="#Utilidade_Publica"/> <rdfs:comment>Setor econômico que representa a prestação de serviço públicos envolvendo a distribuição de gás natural canalizado.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Gestao_de_Recursos_e_Investimentos"> <rdfs:subClassOf rdf:resource="#Servicos_Financeiros_Diversos"/> <rdfs:comment>Setor econômico que representa atividades de gestão de recursos com vistas a investimentos alternativos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Hidroviario"> <rdfs:subClassOf rdf:resource="#Transporte"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de armazenagem e transporte de carga por meio marítimo e de hidrovias.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Holdings_Diversificadas"> <rdfs:subClassOf rdf:resource="#Financeiro"/> <rdfs:comment>Setor econômico que representa a gestão de participações societárias.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Hoteis_e_Restaurantes"> <rdfs:subClassOf rdf:resource="#Consumo_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Hotelaria"> <rdfs:subClassOf rdf:resource="#Hoteis_e_Restaurantes"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de hotelaria.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Incorporacoes"> <rdfs:subClassOf rdf:resource="#Construcao_Civil"/> <rdfs:comment>Setor econômico que representa a incorporação, construção e comercialização de empreendimentos imobiliários.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Indice"> <rdfs:comment>Indice é um indicador formado por um conjunto teorico de valores mobiliarios que reflete o desempenho de um conjunto de ativos relacionados.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Indice_Amplo"> <rdfs:subClassOf rdf:resource="#Indice"/> <rdfs:comment>Indice amplo representa um grande conjunto teorico de valores mobiliarios de diferentes setores.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Indice_Setorial"> <rdfs:subClassOf rdf:resource="#Indice"/> <rdfs:comment>Indice setorial representa um conjunto teorico de valores mobiliarios de um determinado setor.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Industriais"> <rdfs:subClassOf rdf:resource="#Maquinas_e_Equipamentos"/> <rdfs:comment>Setor econômico que representa a produção e comercialização de bens, equipamentos e serviços para os setores de transmissão de energia e telecomunicações, químico, petrolífero, petroquímico, alimentício e agrícola.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Intermediacao_Imobiliaria"> <rdfs:subClassOf rdf:resource="#Exploracao_de_Imoveis"/> <rdfs:comment>Setor econômico que representa a intermediação na compra, venda, permuta e locação de imóveis ou de direitos e obrigações a eles relativos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Intermediarios_Financeiros"> <rdfs:subClassOf rdf:resource="#Financeiro"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Laticinios"> <rdfs:subClassOf rdf:resource="#Alimentos_Processados"/> <rdfs:comment>Setor econômico que representa a industrialização e comercialização de produtos derivados do leite.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Madeira"> <rdfs:subClassOf rdf:resource="#Madeira_e_Papel"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de chapas de fibra de madeira, de produtos de metais e de materiais cerâmicos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Madeira_e_Papel"> <rdfs:subClassOf rdf:resource="#Materiais_Basicos"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Maquinas_e_Equipamentos"> <rdfs:subClassOf rdf:resource="#Bens_Industriais"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Materiais_Basicos"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a extração, processamento e produção de matérias-primas.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Materiais_Diversos"> <rdfs:subClassOf rdf:resource="#Materiais_Basicos"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de artefatos de plástico.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Material_Aeronautico_e_de_Defesa"> <rdfs:subClassOf rdf:resource="#Material_de_Transporte"/> <rdfs:comment>Setor econômico que representa a fabricação e a comercialização de aeronaves para o transporte aéreo e defesa.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Material_Rodoviario"> <rdfs:subClassOf rdf:resource="#Material_de_Transporte"/> <rdfs:comment>Setor econômico que representa a produção e comercialização de veículos automotores, peças e componentes para a movimentação e o transporte rodoviário e ferroviário.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Material_de_Transporte"> <rdfs:subClassOf rdf:resource="#Bens_Industriais"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Medicamentos_e_Outros_Produtos"> <rdfs:subClassOf rdf:resource="#Saude"/> <rdfs:comment>Setor econômico que representa a fabricação de medicamentos, insumos e de outros produtos famacêuticos e de perfumaria.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Midia"> <rdfs:subClassOf rdf:resource="#Comunicacoes"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Mineracao"> <rdfs:subClassOf rdf:resource="#Materiais_Basicos"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Minerais_Metalicos"> <rdfs:subClassOf rdf:resource="#Mineracao"/> <rdfs:comment>Setor econômico que representa a Mineração e comercialização de minério de ferro, ouro, alumínio, níquel e cobre.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Motores_Compressores_e_Outros"> <rdfs:subClassOf rdf:resource="#Maquinas_e_Equipamentos"/> <rdfs:comment>Setor econômico que representa a produção e comercialização de motores,  compressores elétricos e outros equipamentos eletroeletrônicos para diferentes setores, incluindo infraestrutura, siderurgia, papel e celulose, petróleo e gás, e mineração.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Moveis"> <rdfs:subClassOf rdf:resource="#Utilidades_Domesticas"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de móveis.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Negociado_Em_Diferentes_Pregoes"> <rdfs:comment>Negociado_Em_Diferentes_Pregoes representa a negociacao de um mesmo valor mobiliário em diferentes pregões.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Negociado_Em_Pregao"> <rdfs:comment>Negociado_Em_Pregao representa a negociação de um dado valor mobiliário em um dado pregão.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Ordinaria"> <rdfs:subClassOf rdf:resource="#Acao"/> <rdfs:comment>Ação cujo acionista possui direito de voto.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Outros"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a prestação de serviços diversos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Papel_e_Celulose"> <rdfs:subClassOf rdf:resource="#Madeira_e_Papel"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de papel e celulose.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Petroleo_Gas_e_Biocombustivel"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a extração, produção, refino e distribuição de petróleo, gás e biocombustíveis.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Petroquimicos"> <rdfs:subClassOf rdf:resource="#Quimico"/> <rdfs:comment>Setor econômico que representa a produção de produtos petroquímicos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Preferencial"> <rdfs:subClassOf rdf:resource="#Acao"/> <rdfs:comment>Ação cujo acionista possui preferência para o recebimento de valores.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Pregao"> <rdfs:comment>Pregao representa um intervalo de tempo ao longo de um dia no qual acontecem as negociacoes de valores mobiliarios.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Previdencia_e_Seguros"> <rdfs:subClassOf rdf:resource="#Financeiro"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Producao_de_Eventos_e_Shows"> <rdfs:subClassOf rdf:resource="#Viagens_e_Lazer"/> <rdfs:comment>Setor econômico que representa a produção e a organização de eventos e shows.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Produtos_Diversos"> <rdfs:subClassOf rdf:resource="#Comercio"/> <rdfs:comment>Setor econômico que representa a comercialização de material de construção, eletrodomésticos e móveis e de artigos para animais, plantas, flores e sementes.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Produtos_de_Limpeza"> <rdfs:subClassOf rdf:resource="#Produtos_de_Uso_Pessoal_e_de_Limpeza"/> <rdfs:comment>Setor econômico que representa a produção e comercialização de produtos de limpeza.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Produtos_de_Uso_Pessoal"> <rdfs:subClassOf rdf:resource="#Produtos_de_Uso_Pessoal_e_de_Limpeza"/> <rdfs:comment>Setor econômico que representa a produção e comercialização de produtos perfumes e cosméticos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Produtos_de_Uso_Pessoal_e_de_Limpeza"> <rdfs:subClassOf rdf:resource="#Consumo_Nao_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Produtos_para_Construcao"> <rdfs:subClassOf rdf:resource="#Construcao_e_Engenharia"/> <rdfs:comment>Setor econômico que representa a produção e comercialização de produtos para a construção civil, tais como produtos de fibrocimento, cimento, concreto, gesso e produtos de matéria plástica.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Programas_de_Fidelizacao"> <rdfs:subClassOf rdf:resource="#Diversos"/> <rdfs:comment>Setor econômico que representa o gerenciamento de programa de fidelização de clientes e a comercialização de direitos de resgate e prêmios.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Programas_e_Servicos"> <rdfs:subClassOf rdf:resource="#Tecnologia_da_Informacao"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de consultoria, assessoria e desenvolvimento de software e serviços computacionais.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Publicidade_e_Propaganda"> <rdfs:subClassOf rdf:resource="#Midia"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de distribuição e comercialização de painés eletrônicos e publicidade.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Quimico"> <rdfs:subClassOf rdf:resource="#Materiais_Basicos"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Quimicos_Diversos"> <rdfs:subClassOf rdf:resource="#Quimico"/> <rdfs:comment>Setor econômico que representa a produção de soda, cloro e derivados.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Resseguradoras"> <rdfs:subClassOf rdf:resource="#Previdencia_e_Seguros"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de resseguro e retrocessão.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Restaurante_e_Similares"> <rdfs:subClassOf rdf:resource="#Hoteis_e_Restaurantes"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de operação e assessoria a restaurantes.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Rodoviario"> <rdfs:subClassOf rdf:resource="#Transporte"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de logística rodoviária para a indústria automotiva, química e de bens de consumo.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Saude"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de saúde.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Securitizadoras_de_Recebiveis"> <rdfs:subClassOf rdf:resource="#Financeiro"/> <rdfs:comment>Setor econômico que representa a aquisição e securitização de recebíveis imobiliários e agrícola.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Seguradoras"> <rdfs:subClassOf rdf:resource="#Previdencia_e_Seguros"/> <rdfs:comment>Setor econômico que representa atividades de corretagem de seguro.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Servicos"> <rdfs:subClassOf rdf:resource="#Bens_Industriais"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Servicos_Diversos"> <rdfs:subClassOf rdf:resource="#Servicos"/> <rdfs:comment>Setor econômico que representa  a prestação de serviços diversos e serviços logísticos para o transporte de cargas em geral.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Servicos_Educacionais"> <rdfs:subClassOf rdf:resource="#Diversos"/> <rdfs:comment>Setor econômico que representa a prestação de serviços educacionais.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Servicos_Financeiros_Diversos"> <rdfs:subClassOf rdf:resource="#Financeiro"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de administração de mercados organizados de títulos e valores mobiliários, de adquirência e meios de pagamento e de investimentos diversos.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Servicos_Medicos._Hospitalares_e_Diagnosticos"> <rdfs:subClassOf rdf:resource="#Saude"/> <rdfs:comment>Setor econômico que representa a prestação de serviços médicos e de medicina diagnóstica e a gestão de benefícios de assistência à saúde.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Serviços_de_Apoio_e_Armazenagem"> <rdfs:subClassOf rdf:resource="#Transporte"/> <rdfs:comment>Setor econômico que representa a exploração portuária através de operações com contêineres, carga geral, veículos, granéis ou afins.</rdfs:comment> </owl:Class>
+    <!-- Setor_Atuacao já definido -->
+    <owl:Class rdf:about="#Siderurgia"> <rdfs:subClassOf rdf:resource="#Siderurgia_e_Metalurgia"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de produtos siderúrgicos e de cimento.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Siderurgia_e_Metalurgia"> <rdfs:subClassOf rdf:resource="#Materiais_Basicos"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Sociedade_de_Arrendamento_Mercantil"> <rdfs:subClassOf rdf:resource="#Intermediarios_Financeiros"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de arrendamento mercantil.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Sociedade_de_Credito_e_Financiamento"> <rdfs:subClassOf rdf:resource="#Intermediarios_Financeiros"/> <rdfs:comment>Setor econômico que representa a prestação de operações de crédito e de financiamento para a aquisição de bens e serviços.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Tecidos._Vestuario_e_Calcados"> <rdfs:subClassOf rdf:resource="#Comercio"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de tecidos, roupas, acessórios e calçados.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Tecidos._Vestuarios_e_Calcados"> <rdfs:subClassOf rdf:resource="#Consumo_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Tecnologia_da_Informacao"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de tecnologia da informação.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Telecomunicacoes"> <rdfs:subClassOf rdf:resource="#Comunicacoes"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de telecomunicações em geral.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Transporte"> <rdfs:subClassOf rdf:resource="#Bens_Industriais"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Utensilios_Domesticos"> <rdfs:subClassOf rdf:resource="#Utilidades_Domesticas"/> <rdfs:comment>Setor econômico que representa a fabricação e comercialização de utensílios domésticos e de escritório.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Utilidade_Publica"> <rdfs:subClassOf rdf:resource="#Setor_Atuacao"/> <rdfs:comment>Setor econômico que representa a prestação de serviços de utilidade pública.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Utilidades_Domesticas"> <rdfs:subClassOf rdf:resource="#Consumo_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Valor_Mobiliario"> <rdfs:comment>Valor_Mobiliario representa um título ou contrato de investimento coletivo que gera direito de participação, de parceria ou remuneração, inclusive resultante da prestação de serviços, cujos rendimentos advém do esforço do empreendedor ou de terceiros.</rdfs:comment> <rdfs:subClassOf> <owl:Restriction> <owl:onProperty rdf:resource="#temIdentificacao"/> <owl:cardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:cardinality> </owl:Restriction> </rdfs:subClassOf> </owl:Class>
+    <owl:Class rdf:about="#Valor_Mobiliario_Negociado"> <rdfs:comment>Valo_Mobiliario_Negociado representa um valor mobiliário que foi negociado em uma bolsa de valores.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Vestuario"> <rdfs:subClassOf rdf:resource="#Tecidos._Vestuarios_e_Calcados"/> <rdfs:comment>Setor econômico que representa a comercialização de artigos de vestuário, acessórios e calçados.</rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Viagens_e_Lazer"> <rdfs:subClassOf rdf:resource="#Consumo_Ciclico"/> <rdfs:comment xml:lang="pt"></rdfs:comment> </owl:Class>
+    <owl:Class rdf:about="#Viagens_e_Turismo"> <rdfs:subClassOf rdf:resource="#Viagens_e_Lazer"/> <rdfs:comment>Setor econômico que representa a prestação de serviços turísticos.</rdfs:comment> </owl:Class>
+
+    <!--
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    // Definidos usando owl:NamedIndividual e rdf:about="#nomeIndividuo"
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <owl:NamedIndividual rdf:about="#B3"> <rdf:type rdf:resource="#Bolsa_de_Valores"/> </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#IBovespa"> <rdf:type rdf:resource="#Indice_Amplo"/> <rdfs:comment>Indice que representa os valores mobiliarios mais importantes do mercado de acoes brasileiro.</rdfs:comment> <owl:differentFrom rdf:resource="#IBrX_100"/> <owl:differentFrom rdf:resource="#IBrX_50"/> </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#IBrX_100"> <rdf:type rdf:resource="#Indice_Amplo"/> <rdfs:comment>Indice que representa os 100 valores mobiliarios de maior negociabilidade e representatividade do mercado de acoes brasileiro.</rdfs:comment> <owl:differentFrom rdf:resource="#IBrX_50"/> </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#IBrX_50"> <rdf:type rdf:resource="#Indice_Amplo"/> <rdfs:comment>Indice que representa os 50 valores mobiliarios de maior negociabilidade e representatividade do mercado de acoes brasileiro.</rdfs:comment> </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#IEE"> <rdf:type rdf:resource="#Indice_Setorial"/> <rdfs:comment>Indice que representa um conjunto de valores mobiliarios de empresas que atuam no setor eletrico.</rdfs:comment> <owl:differentFrom rdf:resource="#IFNC"/> <owl:differentFrom rdf:resource="#IMAT"/> </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#IFNC"> <rdf:type rdf:resource="#Indice_Setorial"/> <rdfs:comment>Indice que representa um conjunto de valores mobiliarios de empresas que atuam no setor financeiro.</rdfs:comment> <owl:differentFrom rdf:resource="#IMAT"/> </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#IMAT"> <rdf:type rdf:resource="#Indice_Setorial"/> <rdfs:comment>Indice que representa um conjunto de valores mobiliarios de empresas que atuam no setor de materiais basicos.</rdfs:comment> </owl:NamedIndividual>
+
+     <!--
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Axioms
+    // DisjointClasses precisam ser agrupadas ou declaradas individualmente
+    ///////////////////////////////////////////////////////////////////////////////////////
+    -->
+
+     <owl:AllDisjointClasses>
+         <owl:members rdf:parseType="Collection">
+             <rdf:Description rdf:about="#Acessorios"/>
+             <rdf:Description rdf:about="#Calcados"/>
+             <rdf:Description rdf:about="#Fios_e_Tecidos"/>
+             <rdf:Description rdf:about="#Vestuario"/>
+         </owl:members>
+     </owl:AllDisjointClasses>
+
+    <!-- Adicione outros grupos de DisjointClasses ou axiomas aqui... -->
+
+
+</rdf:RDF>
+
+
+<!-- Generated by the OWL API (version 4.5.25.2023-02-15T19:15:49Z) https://github.com/owlcs/owlapi -->

@@ -1,0 +1,18 @@
+Template 1A - Qual foi o preço de fechamento da ação da CSN em 08/05/2023?
+Template 1B - Qual foi o preço de abertura da CBAV3 em 08/05/2023?
+Template 2A - Qual o código de negociação da ação da Gerdau?
+Template 3A - Quais são as ações do setor elétrico?
+Template 4A - Qual foi o volume negociado nas ações do setor bancário em 05/05/2023??
+Template 4B - Qual foi a quantidade de ações do Itau negociadas no pregão de 05/05/2023?
+Template 5A - Qual foi o preço mínimo da ação da Vale em 08/05/2023?
+Template 5B - Qual foi o preço mínima da ação preferencial do Itau em 05/05/2023?
+Template 5C - Qual foi o preço máximo da ação ordinária da Gerdau em 08/05/2023?
+Template 6A - Qual foi a variação intradiária absoluta da ação da CSN no pregão de 08/05/2023?
+Template 7A - Qual ação do setor de mineração que teve a maior alta percentual no pregão do dia 08/05/2023?
+Template 7B - Qual ação do setor de bancário que teve a baixa percentual no pregão do dia 08/05/2023?
+Template 7C - Qual ação do setor de consumo não cíclico que a menor variação no dia 08/05/2023?
+Template 7D - Qual a ação com o maior percentual de alta no pregão de 08/05/2023?
+Template 7E - Quais as cinco ações de maior percentual de alta no pregão de 08/05/2023?
+Template 7F - Quais as cinco ações de maior percentual de baixa no pregão de 08/05/2023?
+Template 8A - Qual foi a variação intradiária absoluta da ação do IBovespa com o maior percentual de alta no pregão de 08/05/2023?
+Template 8B - Qual foi o intervalo intradiário percentual da ação com o maior percentual de baixa entre as ações do IMAT no pregão de 08/05/2023?

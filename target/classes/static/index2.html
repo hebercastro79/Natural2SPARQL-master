@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geração de consultas SPARQL a partir de linguagem natural</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .container {
+            width: 100%;
+            height: 100%;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        #pergunta {
+            width: 100%; 
+        }
+        .form-control {
+            font-size: 18px; 
+            padding: 10px; 
+        }
+        .resposta-grande {
+            font-size: 30px; 
+        }
+        .btn {
+            margin-right: 10px; /* Espaçamento entre os botões */
+            padding: 10px 20px; /* Ajuste do padding do botão */
+            font-size: 18px; /* Ajuste do tamanho da fonte do botão */
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <img src="/static/banner_lssb3.jpg" alt="Banner">
+    <h1>Geração de consultas SPARQL a partir de linguagem natural</h1>
+    <div class="form-group">
+        <label for="pergunta"><h2>Faça sua pergunta:</h2></label>
+        <input type="text" id="pergunta" class="form-control" placeholder="Digite sua pergunta aqui">
+    </div>
+    <button id="btn-armazenar-pergunta" class="btn">RUN QUERY</button>
+    <button id="btn-limpar" class="btn">NEW QUERY</button>
+    <div id="resposta"></div> <!-- Adicionado para exibir a resposta -->
+</div>
+
+<script>
+    document.getElementById('btn-armazenar-pergunta').addEventListener('click', armazenarPergunta);
+    document.getElementById('btn-limpar').addEventListener('click', limparTela);
+
+    function armazenarPergunta() {
+        var pergunta = document.getElementById('pergunta').value;
+
+        // Envia a pergunta para o servidor Java
+        fetch('/processar_pergunta', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ pergunta: pergunta })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Exibe a resposta na página HTML
+            var respostaDiv = document.getElementById('resposta');
+            // Limpar a div antes de adicionar novos conteúdos
+            respostaDiv.innerHTML = '';
+
+            // Criar parágrafos para cada informação
+            var respostaText = document.createElement('p');
+            respostaText.className = 'resposta-grande';
+            respostaText.innerHTML = `<b>Resposta:</b> ${data.resposta}`; // Extrai a resposta do objeto JSON
+            respostaDiv.appendChild(respostaText);
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            document.getElementById('resposta').innerHTML = '<p class="resposta-grande">Erro ao processar a pergunta.</p>';
+        });
+    }
+
+    function limparTela() {
+        document.getElementById('pergunta').value = '';
+        document.getElementById('resposta').innerHTML = '';
+    }
+</script>
+</body>
+</html>

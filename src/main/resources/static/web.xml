@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perguntas e Respostas</title>
+</head>
+<body>
+    <h1>Faça sua pergunta:</h1>
+    <input type="text" id="questionInput">
+    <button onclick="enviarPergunta()">Enviar</button>
+
+    <div id="resposta"></div>
+
+    <script>
+        function enviarPergunta() {
+            const pergunta = document.getElementById("questionInput").value;
+            // Enviar a pergunta para o servidor Python via AJAX ou fetch
+            // Atualizar a div "resposta" com a resposta recebida
+        }
+    </script>
+</body>
+</html>
