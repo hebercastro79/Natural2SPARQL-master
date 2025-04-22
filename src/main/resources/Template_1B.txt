@@ -1,0 +1,14 @@
+# Template Gerado para: Template 1B
+# Objetivo: Buscar preço de abertura de uma entidade em uma data.
+
+SELECT DISTINCT ?empresa ?valor_mobiliario ?negociado ?pregao ?codigo ?precoAbertura 
+ WHERE {
+    ?empresa <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#temValorMobiliarioNegociado> ?valor_mobiliario  .
+    ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociado> ?negociado .
+    ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#representadoPor> ?codigo .
+    ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#precoAbertura> ?precoAbertura .
+    ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociadoDurante> ?pregao .
+    ?pregao <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#ocorreEmData> #DATA# . 
+    FILTER (?empresa = #ENTIDADE#) .
+}
+

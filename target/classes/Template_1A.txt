@@ -1,0 +1,14 @@
+# Template Gerado para: Template 1A
+# Objetivo: Buscar preço de fechamento de uma entidade em uma data.
+
+SELECT DISTINCT ?empresa ?valor_mobiliario ?negociado ?pregao ?codigo ?precoFechamento 
+ WHERE {
+    ?empresa <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#temValorMobiliarioNegociado> ?valor_mobiliario  .
+    ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociado> ?negociado .
+    ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#representadoPor> ?codigo .
+    ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#precoFechamento> ?precoFechamento .
+    ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociadoDurante> ?pregao .
+    ?pregao <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#ocorreEmData> #DATA# . 
+    FILTER (?empresa = #ENTIDADE#) .
+}
+

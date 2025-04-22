@@ -1,0 +1,15 @@
+# Template Gerado para: Template 2A
+# Objetivo: Buscar o ticker (string combinada) de uma entidade específica.
+
+SELECT DISTINCT ?ticker_combinado 
+ WHERE {
+   ?empresa <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#temValorMobiliarioNegociado> ?valor_mobiliario  .
+   ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociado> ?negociado .
+   ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#representadoPor> ?codigo_uri .
+   ?codigo_uri <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#ticker> ?ticker_combinado .
+   FILTER (?empresa = #ENTIDADE#) .
+}
+
+    
+
+
