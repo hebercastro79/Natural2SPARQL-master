@@ -1,7 +1,7 @@
 package com.example.Programa_heber.service;
 
 // --- IMPORTS NECESSÁRIOS ---
-import com.example.Programa_heber.ontology.StockMarketOntology;
+import com.example.Programa_heber.ontology.Ontology;
 // Imports do Apache Jena
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -58,7 +58,7 @@ public class QuestionProcessor {
         rootLogger.setLevel(Level.DEBUG);
     }
 
-    private final StockMarketOntology ontology;
+    private final Ontology ontology;
 
     private static final String BASE_URI = "https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#";
     private static final DateTimeFormatter DATE_FORMATTER_INPUT_SLASH = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -71,8 +71,8 @@ public class QuestionProcessor {
         EMPRESA_URI_MAP.put("CSNMINERACAO", "CMIN3");
         EMPRESA_URI_MAP.put("CMIN3", "CMIN3");
         EMPRESA_URI_MAP.put("CSNA3", "CSNA3");
-        //EMPRESA_URI_MAP.put("GERDAU", "GGBR3GGBR4"); // Mapeia nome para URI combinada
-        //EMPRESA_URI_MAP.put("GGBR3GGBR4", "GGBR3GGBR4"); // Mapeia URI part para ela mesma
+        EMPRESA_URI_MAP.put("GERDAU", "GGBR3GGBR4"); // Mapeia nome para URI combinada
+        EMPRESA_URI_MAP.put("GGBR3GGBR4", "GGBR3GGBR4"); // Mapeia URI part para ela mesma
         // Remover mapeamentos individuais se não forem entidades separadas no grafo para outras queries
         // EMPRESA_URI_MAP.remove("GGBR3");
         // EMPRESA_URI_MAP.remove("GGBR4");
@@ -88,7 +88,7 @@ public class QuestionProcessor {
     // --- FIM DO MAPA DE EMPRESAS ---
 
     @Autowired
-    public QuestionProcessor(StockMarketOntology ontology) {
+    public QuestionProcessor(Ontology ontology) {
         logger.warn(">>>> CONSTRUTOR QuestionProcessor Final (v8 - Ticker Combinado Formatado) INSTANCE HASH: {}", this.hashCode());
         this.ontology = ontology;
         logger.info("QP Final (v8) inicializado.");

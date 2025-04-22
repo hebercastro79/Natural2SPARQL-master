@@ -1,229 +1,231 @@
-2025-04-22 09:23:51,458 - PLN_Processor - INFO - Verificando/Baixando dados NLTK em: C:\Users\MENICIO JR\AppData\Roaming\nltk_data
-2025-04-22 09:23:51,459 - PLN_Processor - DEBUG - 'punkt' já existe.
-2025-04-22 09:23:51,461 - PLN_Processor - DEBUG - 'rslp' já existe.
-2025-04-22 09:23:51,461 - PLN_Processor - INFO - Pacotes NLTK verificados/baixados (ou já existentes).
-2025-04-22 09:23:53,912 - PLN_Processor - INFO - Modelo spaCy 'pt_core_news_sm' carregado.
-2025-04-22 09:23:53,912 - PLN_Processor - INFO - Diretório base do script: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes
-2025-04-22 09:23:53,913 - PLN_Processor - INFO - Diretório de recursos assumido: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes
-2025-04-22 09:23:53,913 - PLN_Processor - INFO - Tentando carregar dicionário de: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes\resultado_similaridade.txt
-2025-04-22 09:23:53,913 - PLN_Processor - INFO - Tentando carregar perguntas de: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes\perguntas_de_interesse.txt
-2025-04-22 09:23:53,914 - PLN_Processor - INFO - --- ================================= ---
-2025-04-22 09:23:53,914 - PLN_Processor - INFO - --- Iniciando processamento PLN Script (PID: 5148) ---
-2025-04-22 09:23:53,915 - PLN_Processor - INFO - --- Argumentos Recebidos: ['C:\\Users\\MENICIO JR\\Desktop\\Natural2SPARQL-master\\target\\classes\\pln_processor.py', 'Qual o código de negociação da ação da Gerdau?'] ---
-2025-04-22 09:23:53,915 - PLN_Processor - INFO - --- Diretório Atual (CWD): C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes ---
-2025-04-22 09:23:53,915 - PLN_Processor - INFO - --- Python Executable: D:\Anaconda\python.exe ---
-2025-04-22 09:23:53,915 - PLN_Processor - INFO - Pergunta recebida: 'Qual o código de negociação da ação da Gerdau?'
-2025-04-22 09:23:53,916 - PLN_Processor - INFO - Carregando configs...
-2025-04-22 09:23:53,917 - PLN_Processor - DEBUG - Tentando carregar arquivo: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes\perguntas_de_interesse.txt
-2025-04-22 09:23:53,920 - PLN_Processor - INFO - Arquivo 'perguntas_de_interesse.txt' lido com encoding: utf-8
-2025-04-22 09:23:53,921 - PLN_Processor - DEBUG - Carregadas 18 linhas de 'perguntas_de_interesse.txt'.
-2025-04-22 09:23:53,922 - PLN_Processor - DEBUG - Tentando carregar arquivo: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes\resultado_similaridade.txt
-2025-04-22 09:23:53,939 - PLN_Processor - INFO - Arquivo 'resultado_similaridade.txt' lido com encoding: utf-8
-2025-04-22 09:23:53,940 - PLN_Processor - DEBUG - Carregadas 156 linhas de 'resultado_similaridade.txt'.
-2025-04-22 09:23:53,940 - PLN_Processor - INFO - Processando dicionário de sinônimos de 'resultado_similaridade.txt'...
-2025-04-22 09:23:53,941 - PLN_Processor - DEBUG -   - Chave 'acao': 5 sinônimos.
-2025-04-22 09:23:53,942 - PLN_Processor - DEBUG -   - Chave 'acessorios': 9 sinônimos.
-2025-04-22 09:23:53,942 - PLN_Processor - DEBUG -   - Chave 'acucar_e_alcool': 7 sinônimos.
-2025-04-22 09:23:53,942 - PLN_Processor - DEBUG -   - Chave 'aereo': 6 sinônimos.
-2025-04-22 09:23:53,942 - PLN_Processor - DEBUG -   - Chave 'agricultura': 7 sinônimos.
-2025-04-22 09:23:53,942 - PLN_Processor - DEBUG -   - Chave 'agropecuaria': 9 sinônimos.
-2025-04-22 09:23:53,943 - PLN_Processor - DEBUG -   - Chave 'agua_e_saneamento': 5 sinônimos.
-2025-04-22 09:23:53,943 - PLN_Processor - DEBUG -   - Chave 'alimentos': 5 sinônimos.
-2025-04-22 09:23:53,943 - PLN_Processor - DEBUG -   - Chave 'alimentos_diversos': 10 sinônimos.
-2025-04-22 09:23:53,943 - PLN_Processor - DEBUG -   - Chave 'alimentos_processados': 2 sinônimos.
-2025-04-22 09:23:53,943 - PLN_Processor - DEBUG -   - Chave 'aluguel_de_carros': 4 sinônimos.
-2025-04-22 09:23:53,943 - PLN_Processor - DEBUG -   - Chave 'armas_e_municoes': 4 sinônimos.
-2025-04-22 09:23:53,944 - PLN_Processor - DEBUG -   - Chave 'artefatos_de_cobre': 3 sinônimos.
-2025-04-22 09:23:53,944 - PLN_Processor - DEBUG -   - Chave 'artefatos_de_ferro_e_aco': 2 sinônimos.
-2025-04-22 09:23:53,944 - PLN_Processor - DEBUG -   - Chave 'atividades_esportivas': 3 sinônimos.
-2025-04-22 09:23:53,944 - PLN_Processor - DEBUG -   - Chave 'automoveis_e_motocicletas': 4 sinônimos.
-2025-04-22 09:23:53,944 - PLN_Processor - DEBUG -   - Chave 'bancos': 4 sinônimos.
-2025-04-22 09:23:53,945 - PLN_Processor - DEBUG -   - Chave 'bebidas': 1 sinônimos.
-2025-04-22 09:23:53,945 - PLN_Processor - DEBUG -   - Chave 'bens_industriais': 3 sinônimos.
-2025-04-22 09:23:53,945 - PLN_Processor - DEBUG -   - Chave 'bicicletas': 4 sinônimos.
-2025-04-22 09:23:53,945 - PLN_Processor - DEBUG -   - Chave 'bolsa_de_valores': 5 sinônimos.
-2025-04-22 09:23:53,945 - PLN_Processor - DEBUG -   - Chave 'brazilian_depositary_receipt': 3 sinônimos.
-2025-04-22 09:23:53,945 - PLN_Processor - DEBUG -   - Chave 'brinquedos_e_jogos': 3 sinônimos.
-2025-04-22 09:23:53,945 - PLN_Processor - DEBUG -   - Chave 'calcados': 8 sinônimos.
-2025-04-22 09:23:53,946 - PLN_Processor - DEBUG -   - Chave 'carnes_e_derivados': 5 sinônimos.
-2025-04-22 09:23:53,946 - PLN_Processor - DEBUG -   - Chave 'certificado_de_deposito_de_acoes': 3 sinônimos.
-2025-04-22 09:23:53,946 - PLN_Processor - DEBUG -   - Chave 'cervejas_e_refrigerantes': 9 sinônimos.
-2025-04-22 09:23:53,946 - PLN_Processor - DEBUG -   - Chave 'classe_a': 1 sinônimos.
-2025-04-22 09:23:53,946 - PLN_Processor - DEBUG -   - Chave 'classe_b': 1 sinônimos.
-2025-04-22 09:23:53,946 - PLN_Processor - DEBUG -   - Chave 'codigo': 4 sinônimos.
-2025-04-22 09:23:53,947 - PLN_Processor - DEBUG -   - Chave 'codigo_negociacao': 4 sinônimos.
-2025-04-22 09:23:53,947 - PLN_Processor - DEBUG -   - Chave 'comercio': 3 sinônimos.
-2025-04-22 09:23:53,947 - PLN_Processor - DEBUG -   - Chave 'comercio_de_eletrodomesticos': 4 sinônimos.
-2025-04-22 09:23:53,947 - PLN_Processor - DEBUG -   - Chave 'comercio_de_materiais_de_transporte': 7 sinônimos.
-2025-04-22 09:23:53,947 - PLN_Processor - DEBUG -   - Chave 'comercio_e_distribuicao': 1 sinônimos.
-2025-04-22 09:23:53,947 - PLN_Processor - DEBUG -   - Chave 'comercio_e_distribuicao_de_medicamentos_e_outros_produtos': 5 sinônimos.
-2025-04-22 09:23:53,948 - PLN_Processor - DEBUG -   - Chave 'computadores_e_equipamentos': 3 sinônimos.
-2025-04-22 09:23:53,948 - PLN_Processor - DEBUG -   - Chave 'comunicacoes': 4 sinônimos.
-2025-04-22 09:23:53,948 - PLN_Processor - DEBUG -   - Chave 'construcao_civil': 1 sinônimos.
-2025-04-22 09:23:53,948 - PLN_Processor - DEBUG -   - Chave 'construcao_pesada': 2 sinônimos.
-2025-04-22 09:23:53,948 - PLN_Processor - DEBUG -   - Chave 'construcao_e_agricolas': 3 sinônimos.
-2025-04-22 09:23:53,948 - PLN_Processor - DEBUG -   - Chave 'construcao_e_engenharia': 1 sinônimos.
-2025-04-22 09:23:53,948 - PLN_Processor - DEBUG -   - Chave 'consumo_ciclico': 4 sinônimos.
-2025-04-22 09:23:53,949 - PLN_Processor - DEBUG -   - Chave 'consumo_nao_ciclico': 7 sinônimos.
-2025-04-22 09:23:53,949 - PLN_Processor - DEBUG -   - Chave 'corretoras_de_seguros_e_resseguros': 8 sinônimos.
-2025-04-22 09:23:53,949 - PLN_Processor - DEBUG -   - Chave 'debenture': 4 sinônimos.
-2025-04-22 09:23:53,949 - PLN_Processor - DEBUG -   - Chave 'diversos': 1 sinônimos.
-2025-04-22 09:23:53,949 - PLN_Processor - DEBUG -   - Chave 'eletrodomesticos': 4 sinônimos.
-2025-04-22 09:23:53,949 - PLN_Processor - DEBUG -   - Chave 'embalagens': 6 sinônimos.
-2025-04-22 09:23:53,950 - PLN_Processor - DEBUG -   - Chave 'empresa': 5 sinônimos.
-2025-04-22 09:23:53,950 - PLN_Processor - DEBUG -   - Chave 'empresa_capital_aberto': 5 sinônimos.
-2025-04-22 09:23:53,950 - PLN_Processor - DEBUG -   - Chave 'energia_eletrica': 7 sinônimos.
-2025-04-22 09:23:53,950 - PLN_Processor - DEBUG -   - Chave 'engenharia_consultiva': 3 sinônimos.
-2025-04-22 09:23:53,950 - PLN_Processor - DEBUG -   - Chave 'equipamentos': 7 sinônimos.
-2025-04-22 09:23:53,950 - PLN_Processor - DEBUG -   - Chave 'equipamentos_e_servicos': 5 sinônimos.
-2025-04-22 09:23:53,951 - PLN_Processor - DEBUG -   - Chave 'exploracao_refino_e_distribuicao': 7 sinônimos.
-2025-04-22 09:23:53,951 - PLN_Processor - DEBUG -   - Chave 'exploracao_de_imoveis': 12 sinônimos.
-2025-04-22 09:23:53,951 - PLN_Processor - DEBUG -   - Chave 'exploracao_de_rodovias': 3 sinônimos.
-2025-04-22 09:23:53,951 - PLN_Processor - DEBUG -   - Chave 'ferroviario': 7 sinônimos.
-2025-04-22 09:23:53,951 - PLN_Processor - DEBUG -   - Chave 'fertilizantes_e_defensivos': 5 sinônimos.
-2025-04-22 09:23:53,952 - PLN_Processor - DEBUG -   - Chave 'financeiro': 6 sinônimos.
-2025-04-22 09:23:53,952 - PLN_Processor - DEBUG -   - Chave 'fios_e_tecidos': 7 sinônimos.
-2025-04-22 09:23:53,952 - PLN_Processor - DEBUG -   - Chave 'gas': 3 sinônimos.
-2025-04-22 09:23:53,952 - PLN_Processor - DEBUG -   - Chave 'gestao_de_recursos_e_investimentos': 3 sinônimos.
-2025-04-22 09:23:53,952 - PLN_Processor - DEBUG -   - Chave 'hidroviario': 7 sinônimos.
-2025-04-22 09:23:53,952 - PLN_Processor - DEBUG -   - Chave 'holdings_diversificadas': 3 sinônimos.
-2025-04-22 09:23:53,953 - PLN_Processor - DEBUG -   - Chave 'hoteis_e_restaurantes': 1 sinônimos.
-2025-04-22 09:23:53,953 - PLN_Processor - DEBUG -   - Chave 'hotelaria': 5 sinônimos.
-2025-04-22 09:23:53,953 - PLN_Processor - DEBUG -   - Chave 'incorporacoes': 4 sinônimos.
-2025-04-22 09:23:53,953 - PLN_Processor - DEBUG -   - Chave 'indice': 4 sinônimos.
-2025-04-22 09:23:53,953 - PLN_Processor - DEBUG -   - Chave 'indice_amplo': 4 sinônimos.
-2025-04-22 09:23:53,953 - PLN_Processor - DEBUG -   - Chave 'indice_setorial': 4 sinônimos.
-2025-04-22 09:23:53,954 - PLN_Processor - DEBUG -   - Chave 'industriais': 10 sinônimos.
-2025-04-22 09:23:53,954 - PLN_Processor - DEBUG -   - Chave 'intermediacao_imobiliaria': 9 sinônimos.
-2025-04-22 09:23:53,954 - PLN_Processor - DEBUG -   - Chave 'intermediarios_financeiros': 4 sinônimos.
-2025-04-22 09:23:53,954 - PLN_Processor - DEBUG -   - Chave 'laticinios': 5 sinônimos.
-2025-04-22 09:23:53,954 - PLN_Processor - DEBUG -   - Chave 'madeira': 8 sinônimos.
-2025-04-22 09:23:53,954 - PLN_Processor - DEBUG -   - Chave 'madeira_e_papel': 1 sinônimos.
-2025-04-22 09:23:53,955 - PLN_Processor - DEBUG -   - Chave 'maquinas_e_equipamentos': 1 sinônimos.
-2025-04-22 09:23:53,955 - PLN_Processor - DEBUG -   - Chave 'materiais_basicos': 5 sinônimos.
-2025-04-22 09:23:53,955 - PLN_Processor - DEBUG -   - Chave 'materiais_diversos': 5 sinônimos.
-2025-04-22 09:23:53,955 - PLN_Processor - DEBUG -   - Chave 'material_aeronautico_e_de_defesa': 5 sinônimos.
-2025-04-22 09:23:53,955 - PLN_Processor - DEBUG -   - Chave 'material_rodoviario': 8 sinônimos.
-2025-04-22 09:23:53,955 - PLN_Processor - DEBUG -   - Chave 'material_de_transporte': 1 sinônimos.
-2025-04-22 09:23:53,956 - PLN_Processor - DEBUG -   - Chave 'medicamentos_e_outros_produtos': 6 sinônimos.
-2025-04-22 09:23:53,956 - PLN_Processor - DEBUG -   - Chave 'midia': 1 sinônimos.
-2025-04-22 09:23:53,956 - PLN_Processor - DEBUG -   - Chave 'mineracao': 2 sinônimos.
-2025-04-22 09:23:53,956 - PLN_Processor - DEBUG -   - Chave 'minerais_metalicos': 9 sinônimos.
-2025-04-22 09:23:53,956 - PLN_Processor - DEBUG -   - Chave 'motores_compressores_e_outros': 9 sinônimos.
-2025-04-22 09:23:53,956 - PLN_Processor - DEBUG -   - Chave 'moveis': 4 sinônimos.
-2025-04-22 09:23:53,957 - PLN_Processor - DEBUG -   - Chave 'negociado_em_diferentes_pregoes': 1 sinônimos.
-2025-04-22 09:23:53,957 - PLN_Processor - DEBUG -   - Chave 'negociado_em_pregao': 1 sinônimos.
-2025-04-22 09:23:53,957 - PLN_Processor - DEBUG -   - Chave 'ordinaria': 4 sinônimos.
-2025-04-22 09:23:53,957 - PLN_Processor - DEBUG -   - Chave 'outros': 4 sinônimos.
-2025-04-22 09:23:53,957 - PLN_Processor - DEBUG -   - Chave 'papel_e_celulose': 3 sinônimos.
-2025-04-22 09:23:53,957 - PLN_Processor - DEBUG -   - Chave 'petroleo_gas_e_biocombustivel': 11 sinônimos.
-2025-04-22 09:23:53,958 - PLN_Processor - DEBUG -   - Chave 'petroquimicos': 4 sinônimos.
-2025-04-22 09:23:53,958 - PLN_Processor - DEBUG -   - Chave 'preferencial': 4 sinônimos.
-2025-04-22 09:23:53,958 - PLN_Processor - DEBUG -   - Chave 'pregao': 7 sinônimos.
-2025-04-22 09:23:53,958 - PLN_Processor - DEBUG -   - Chave 'previdencia_e_seguros': 1 sinônimos.
-2025-04-22 09:23:53,958 - PLN_Processor - DEBUG -   - Chave 'producao_de_eventos_e_shows': 7 sinônimos.
-2025-04-22 09:23:53,958 - PLN_Processor - DEBUG -   - Chave 'produtos_diversos': 10 sinônimos.
-2025-04-22 09:23:53,959 - PLN_Processor - DEBUG -   - Chave 'produtos_de_limpeza': 5 sinônimos.
-2025-04-22 09:23:53,959 - PLN_Processor - DEBUG -   - Chave 'produtos_de_uso_pessoal': 7 sinônimos.
-2025-04-22 09:23:53,959 - PLN_Processor - DEBUG -   - Chave 'produtos_de_uso_pessoal_e_de_limpeza': 1 sinônimos.
-2025-04-22 09:23:53,959 - PLN_Processor - DEBUG -   - Chave 'produtos_para_construcao': 4 sinônimos.
-2025-04-22 09:23:53,959 - PLN_Processor - DEBUG -   - Chave 'programas_de_fidelizacao': 11 sinônimos.
-2025-04-22 09:23:53,959 - PLN_Processor - DEBUG -   - Chave 'programas_e_servicos': 4 sinônimos.
-2025-04-22 09:23:53,960 - PLN_Processor - DEBUG -   - Chave 'publicidade_e_propaganda': 4 sinônimos.
-2025-04-22 09:23:53,960 - PLN_Processor - DEBUG -   - Chave 'quimico': 1 sinônimos.
-2025-04-22 09:23:53,960 - PLN_Processor - DEBUG -   - Chave 'quimicos_diversos': 4 sinônimos.
-2025-04-22 09:23:53,960 - PLN_Processor - DEBUG -   - Chave 'resseguradoras': 5 sinônimos.
-2025-04-22 09:23:53,960 - PLN_Processor - DEBUG -   - Chave 'restaurante_e_similares': 3 sinônimos.
-2025-04-22 09:23:53,960 - PLN_Processor - DEBUG -   - Chave 'rodoviario': 6 sinônimos.
-2025-04-22 09:23:53,961 - PLN_Processor - DEBUG -   - Chave 'saude': 3 sinônimos.
-2025-04-22 09:23:53,961 - PLN_Processor - DEBUG -   - Chave 'securitizadoras_de_recebiveis': 4 sinônimos.
-2025-04-22 09:23:53,961 - PLN_Processor - DEBUG -   - Chave 'seguradoras': 4 sinônimos.
-2025-04-22 09:23:53,961 - PLN_Processor - DEBUG -   - Chave 'servicos': 1 sinônimos.
-2025-04-22 09:23:53,961 - PLN_Processor - DEBUG -   - Chave 'servicos_diversos': 4 sinônimos.
-2025-04-22 09:23:53,961 - PLN_Processor - DEBUG -   - Chave 'servicos_educacionais': 7 sinônimos.
-2025-04-22 09:23:53,962 - PLN_Processor - DEBUG -   - Chave 'servicos_financeiros_diversos': 6 sinônimos.
-2025-04-22 09:23:53,962 - PLN_Processor - DEBUG -   - Chave 'servicos_medicos_hospitalares_diagnosticos': 9 sinônimos.
-2025-04-22 09:23:53,962 - PLN_Processor - DEBUG -   - Chave 'servicos_de_apoio_e_armazenagem': 7 sinônimos.
-2025-04-22 09:23:53,962 - PLN_Processor - DEBUG -   - Chave 'setor_atuacao': 7 sinônimos.
-2025-04-22 09:23:53,962 - PLN_Processor - DEBUG -   - Chave 'siderurgia': 5 sinônimos.
-2025-04-22 09:23:53,962 - PLN_Processor - DEBUG -   - Chave 'siderurgia_e_metalurgia': 1 sinônimos.
-2025-04-22 09:23:53,963 - PLN_Processor - DEBUG -   - Chave 'sociedade_de_arrendamento_mercantil': 5 sinônimos.
-2025-04-22 09:23:53,963 - PLN_Processor - DEBUG -   - Chave 'sociedade_de_credito_e_financiamento': 6 sinônimos.
-2025-04-22 09:23:53,963 - PLN_Processor - DEBUG -   - Chave 'tecidos_vestuario_calcados': 8 sinônimos.
-2025-04-22 09:23:53,963 - PLN_Processor - DEBUG -   - Chave 'tecnologia_da_informacao': 5 sinônimos.
-2025-04-22 09:23:53,963 - PLN_Processor - DEBUG -   - Chave 'telecomunicacoes': 5 sinônimos.
-2025-04-22 09:23:53,963 - PLN_Processor - DEBUG -   - Chave 'transporte': 1 sinônimos.
-2025-04-22 09:23:53,964 - PLN_Processor - DEBUG -   - Chave 'utensilios_domesticos': 6 sinônimos.
-2025-04-22 09:23:53,964 - PLN_Processor - DEBUG -   - Chave 'utilidade_publica': 4 sinônimos.
-2025-04-22 09:23:53,964 - PLN_Processor - DEBUG -   - Chave 'valor_mobiliario': 5 sinônimos.
-2025-04-22 09:23:53,964 - PLN_Processor - DEBUG -   - Chave 'valor_mobiliario_negociado': 5 sinônimos.
-2025-04-22 09:23:53,964 - PLN_Processor - DEBUG -   - Chave 'vestuario': 7 sinônimos.
-2025-04-22 09:23:53,964 - PLN_Processor - DEBUG -   - Chave 'viagens_e_lazer': 5 sinônimos.
-2025-04-22 09:23:53,965 - PLN_Processor - DEBUG -   - Chave 'precoabertura': 2 sinônimos.
-2025-04-22 09:23:53,965 - PLN_Processor - DEBUG -   - Chave 'precofechamento': 5 sinônimos.
-2025-04-22 09:23:53,965 - PLN_Processor - DEBUG -   - Chave 'precomedio': 3 sinônimos.
-2025-04-22 09:23:53,965 - PLN_Processor - DEBUG -   - Chave 'precomaximo': 4 sinônimos.
-2025-04-22 09:23:53,965 - PLN_Processor - DEBUG -   - Chave 'precominimo': 4 sinônimos.
-2025-04-22 09:23:53,965 - PLN_Processor - DEBUG -   - Chave 'totalnegocios': 4 sinônimos.
-2025-04-22 09:23:53,966 - PLN_Processor - DEBUG -   - Chave 'volumetotalnegociado': 5 sinônimos.
-2025-04-22 09:23:53,966 - PLN_Processor - DEBUG -   - Chave 'quantidadepapeisnegociados': 6 sinônimos.
-2025-04-22 09:23:53,966 - PLN_Processor - DEBUG -   - Chave 'variacaointradiariaabsoluta': 4 sinônimos.
-2025-04-22 09:23:53,966 - PLN_Processor - DEBUG -   - Chave 'variacaopercentual': 7 sinônimos.
-2025-04-22 09:23:53,966 - PLN_Processor - DEBUG -   - Chave 'intervalointradiariopercentual': 3 sinônimos.
-2025-04-22 09:23:53,966 - PLN_Processor - INFO - Dicionário 'resultado_similaridade.txt' carregado: 149 chaves.
-2025-04-22 09:23:53,967 - PLN_Processor - INFO - Configs carregadas.
-2025-04-22 09:23:53,967 - PLN_Processor - INFO - Processando NLP...
-2025-04-22 09:23:53,967 - PLN_Processor - DEBUG - Extraindo spaCy de: 'Qual o código de negociação da ação da Gerdau?...'
-2025-04-22 09:23:54,012 - PLN_Processor - DEBUG -   - Análise de dependências SPO...
-2025-04-22 09:23:54,012 - PLN_Processor - DEBUG -     - Suj (nsubj): 'o código de negociação da ação da Gerdau'
-2025-04-22 09:23:54,012 - PLN_Processor - DEBUG -   - Extração NER...
-2025-04-22 09:23:54,014 - PLN_Processor - DEBUG -     - NER: 'Gerdau' (ORG)
-2025-04-22 09:23:54,014 - PLN_Processor - INFO - Extração spaCy final. SPO: {'sujeito': ['o código de negociação da ação da Gerdau'], 'predicado': [], 'objeto': []}, NER: {'ORG': ['Gerdau']}
-2025-04-22 09:23:54,014 - PLN_Processor - DEBUG - Extraindo data de: 'Qual o código de negociação da ação da Gerdau?'
-2025-04-22 09:23:54,015 - PLN_Processor - INFO - Nenhuma data reconhecível.
-2025-04-22 09:23:54,015 - PLN_Processor - INFO - NLP concluído.
-2025-04-22 09:23:54,015 - PLN_Processor - INFO - Buscando template...
-2025-04-22 09:23:54,017 - PLN_Processor - DEBUG - Buscando template para 'qual o codigo de negociacao da acao da gerdau' (Limiar: 0.65)
-2025-04-22 09:23:54,017 - PLN_Processor - DEBUG -     -> 'Template 1A', Sim: 0.5490
-2025-04-22 09:23:54,018 - PLN_Processor - DEBUG -       >> NOVA MAIOR SIM! <<
-2025-04-22 09:23:54,018 - PLN_Processor - DEBUG -     -> 'Template 1B', Sim: 0.4681
-2025-04-22 09:23:54,019 - PLN_Processor - DEBUG -     -> 'Template 2A', Sim: 1.0000
-2025-04-22 09:23:54,019 - PLN_Processor - DEBUG -       >> NOVA MAIOR SIM! <<
-2025-04-22 09:23:54,019 - PLN_Processor - DEBUG -     -> 'Template 3A', Sim: 0.3951
-2025-04-22 09:23:54,020 - PLN_Processor - DEBUG -     -> 'Template 4A', Sim: 0.5000
-2025-04-22 09:23:54,021 - PLN_Processor - DEBUG -     -> 'Template 4B', Sim: 0.4138
-2025-04-22 09:23:54,021 - PLN_Processor - DEBUG -     -> 'Template 5A', Sim: 0.5417
-2025-04-22 09:23:54,022 - PLN_Processor - DEBUG -     -> 'Template 5B', Sim: 0.4954
-2025-04-22 09:23:54,023 - PLN_Processor - DEBUG -     -> 'Template 5C', Sim: 0.5370
-2025-04-22 09:23:54,023 - PLN_Processor - DEBUG -     -> 'Template 6A', Sim: 0.4426
-2025-04-22 09:23:54,024 - PLN_Processor - DEBUG -     -> 'Template 7A', Sim: 0.2519
-2025-04-22 09:23:54,025 - PLN_Processor - DEBUG -     -> 'Template 7B', Sim: 0.2636
-2025-04-22 09:23:54,025 - PLN_Processor - DEBUG -     -> 'Template 7C', Sim: 0.2764
-2025-04-22 09:23:54,026 - PLN_Processor - DEBUG -     -> 'Template 7D', Sim: 0.3119
-2025-04-22 09:23:54,026 - PLN_Processor - DEBUG -     -> 'Template 7E', Sim: 0.2261
-2025-04-22 09:23:54,027 - PLN_Processor - DEBUG -     -> 'Template 7F', Sim: 0.2241
-2025-04-22 09:23:54,028 - PLN_Processor - DEBUG -     -> 'Template 8A', Sim: 0.3671
-2025-04-22 09:23:54,029 - PLN_Processor - DEBUG -     -> 'Template 8B', Sim: 0.3353
-2025-04-22 09:23:54,029 - PLN_Processor - INFO - Template similar: Nome='Template 2A', Sim=1.0000
-2025-04-22 09:23:54,029 - PLN_Processor - INFO - Template 'Template 2A' selecionado (Sim: 1.0000).
-2025-04-22 09:23:54,029 - PLN_Processor - INFO - Mapeando placeholders semânticos...
-2025-04-22 09:23:54,029 - PLN_Processor - DEBUG - Iniciando mapeamento semântico...
-2025-04-22 09:23:54,030 - PLN_Processor - DEBUG -   - #ENT via NER ORG (Genérico): 'GERDAU'
-2025-04-22 09:23:54,030 - PLN_Processor - INFO -   - Map #ENTIDADE: 'GERDAU' (NER ORG (Genérico))
-2025-04-22 09:23:54,031 - PLN_Processor - DEBUG -   - Texto candidato #VALOR_DESEJADO: 'código de negociação da ação'
-2025-04-22 09:23:54,031 - PLN_Processor - DEBUG - Recebido para buscar termo: 'código de negociação da ação'
-2025-04-22 09:23:54,032 - PLN_Processor - DEBUG - Buscando termo no dicionário para frase normalizada: 'codigo de negociacao da acao' (Limiar: 0.75)
-2025-04-22 09:23:54,060 - PLN_Processor - DEBUG -     -> Novo melhor (de sinônimo 'codigo de negociacao'): Chave='codigo' Similaridade=0.8333
-2025-04-22 09:23:54,210 - PLN_Processor - INFO - Melhor termo encontrado para 'código de negociação da ação': Chave='codigo' (Match 'codigo de negociacao', Sim: 0.83)
-2025-04-22 09:23:54,210 - PLN_Processor - INFO -   - Map #VALOR_DESEJADO: 'codigo' (de 'código de negociação da ação')
-2025-04-22 09:23:54,211 - PLN_Processor - DEBUG -   - Texto norm para tipo ação: 'qual o codigo de negociacao da acao da gerdau'
-2025-04-22 09:23:54,212 - PLN_Processor - DEBUG -   - Nenhum #TIPO_ACAO explícito.
-2025-04-22 09:23:54,212 - PLN_Processor - DEBUG -   - Nenhum #SETOR explícito.
-2025-04-22 09:23:54,212 - PLN_Processor - INFO - Mapeamentos semânticos finais: {'#ENTIDADE': 'GERDAU', '#VALOR_DESEJADO': 'codigo'}
-2025-04-22 09:23:54,213 - PLN_Processor - INFO - Mapeamento concluído.
-2025-04-22 09:23:54,214 - PLN_Processor - INFO - Validando placeholders...
-2025-04-22 09:23:54,215 - PLN_Processor - INFO - Validação OK para 'Template 2A'.
-2025-04-22 09:23:54,215 - PLN_Processor - INFO - Construindo JSON de resposta...
-2025-04-22 09:23:54,216 - PLN_Processor - DEBUG - JSON final para stdout: {"template_nome": "Template 2A", "mapeamentos": {"#ENTIDADE": "GERDAU", "#VALOR_DESEJADO": "codigo"}, "_debug_info": {"pergunta_original": "Qual o código de negociação da ação da Gerdau?", "elementos_extraidos_nlp": {"sujeito": ["o código de negociação da ação da Gerdau"], "predicado": [], "objeto": []}, "entidades_nomeadas_nlp": {"ORG": ["Gerdau"]}, "data_extraida_nlp": null, "similaridade_template": 1.0, "linha_template_correspondente": "Template 2A - Qual o código de negociação da ação da Gerdau?", "placeholders_requeridos_verificados": ["#ENTIDADE", "#VALOR_DESEJADO"], "placeholders_faltando_verificados": []}}
-2025-04-22 09:23:54,216 - PLN_Processor - INFO - Enviando resposta para stdout...
-2025-04-22 09:23:54,217 - PLN_Processor - INFO - --- Processamento PLN Script concluído com sucesso ---
+2025-04-22 09:58:41,977 - PLN_Processor - INFO - Verificando/Baixando dados NLTK em: C:\Users\MENICIO JR\AppData\Roaming\nltk_data
+2025-04-22 09:58:41,978 - PLN_Processor - DEBUG - 'punkt' já existe.
+2025-04-22 09:58:41,978 - PLN_Processor - DEBUG - 'rslp' já existe.
+2025-04-22 09:58:41,978 - PLN_Processor - INFO - Pacotes NLTK verificados/baixados (ou já existentes).
+2025-04-22 09:58:43,602 - PLN_Processor - INFO - Modelo spaCy 'pt_core_news_sm' carregado.
+2025-04-22 09:58:43,602 - PLN_Processor - INFO - Diretório base do script: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes
+2025-04-22 09:58:43,602 - PLN_Processor - INFO - Diretório de recursos assumido: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes
+2025-04-22 09:58:43,602 - PLN_Processor - INFO - Tentando carregar dicionário de: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes\resultado_similaridade.txt
+2025-04-22 09:58:43,603 - PLN_Processor - INFO - Tentando carregar perguntas de: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes\perguntas_de_interesse.txt
+2025-04-22 09:58:43,603 - PLN_Processor - INFO - --- ================================= ---
+2025-04-22 09:58:43,603 - PLN_Processor - INFO - --- Iniciando processamento PLN Script (PID: 9884) ---
+2025-04-22 09:58:43,604 - PLN_Processor - INFO - --- Argumentos Recebidos: ['C:\\Users\\MENICIO JR\\Desktop\\Natural2SPARQL-master\\target\\classes\\pln_processor.py', 'Qual foi o preço de abertura da CBAV3 em 08/05/2023?'] ---
+2025-04-22 09:58:43,604 - PLN_Processor - INFO - --- Diretório Atual (CWD): C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes ---
+2025-04-22 09:58:43,604 - PLN_Processor - INFO - --- Python Executable: D:\Anaconda\python.exe ---
+2025-04-22 09:58:43,604 - PLN_Processor - INFO - Pergunta recebida: 'Qual foi o preço de abertura da CBAV3 em 08/05/2023?'
+2025-04-22 09:58:43,604 - PLN_Processor - INFO - Carregando configs...
+2025-04-22 09:58:43,605 - PLN_Processor - DEBUG - Tentando carregar arquivo: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes\perguntas_de_interesse.txt
+2025-04-22 09:58:43,606 - PLN_Processor - INFO - Arquivo 'perguntas_de_interesse.txt' lido com encoding: utf-8
+2025-04-22 09:58:43,606 - PLN_Processor - DEBUG - Carregadas 18 linhas de 'perguntas_de_interesse.txt'.
+2025-04-22 09:58:43,607 - PLN_Processor - DEBUG - Tentando carregar arquivo: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\target\classes\resultado_similaridade.txt
+2025-04-22 09:58:43,608 - PLN_Processor - INFO - Arquivo 'resultado_similaridade.txt' lido com encoding: utf-8
+2025-04-22 09:58:43,608 - PLN_Processor - DEBUG - Carregadas 156 linhas de 'resultado_similaridade.txt'.
+2025-04-22 09:58:43,609 - PLN_Processor - INFO - Processando dicionário de sinônimos de 'resultado_similaridade.txt'...
+2025-04-22 09:58:43,610 - PLN_Processor - DEBUG -   - Chave 'acao': 5 sinônimos.
+2025-04-22 09:58:43,610 - PLN_Processor - DEBUG -   - Chave 'acessorios': 9 sinônimos.
+2025-04-22 09:58:43,610 - PLN_Processor - DEBUG -   - Chave 'acucar_e_alcool': 7 sinônimos.
+2025-04-22 09:58:43,610 - PLN_Processor - DEBUG -   - Chave 'aereo': 6 sinônimos.
+2025-04-22 09:58:43,611 - PLN_Processor - DEBUG -   - Chave 'agricultura': 7 sinônimos.
+2025-04-22 09:58:43,611 - PLN_Processor - DEBUG -   - Chave 'agropecuaria': 9 sinônimos.
+2025-04-22 09:58:43,611 - PLN_Processor - DEBUG -   - Chave 'agua_e_saneamento': 5 sinônimos.
+2025-04-22 09:58:43,611 - PLN_Processor - DEBUG -   - Chave 'alimentos': 5 sinônimos.
+2025-04-22 09:58:43,611 - PLN_Processor - DEBUG -   - Chave 'alimentos_diversos': 10 sinônimos.
+2025-04-22 09:58:43,612 - PLN_Processor - DEBUG -   - Chave 'alimentos_processados': 2 sinônimos.
+2025-04-22 09:58:43,612 - PLN_Processor - DEBUG -   - Chave 'aluguel_de_carros': 4 sinônimos.
+2025-04-22 09:58:43,612 - PLN_Processor - DEBUG -   - Chave 'armas_e_municoes': 4 sinônimos.
+2025-04-22 09:58:43,612 - PLN_Processor - DEBUG -   - Chave 'artefatos_de_cobre': 3 sinônimos.
+2025-04-22 09:58:43,612 - PLN_Processor - DEBUG -   - Chave 'artefatos_de_ferro_e_aco': 2 sinônimos.
+2025-04-22 09:58:43,612 - PLN_Processor - DEBUG -   - Chave 'atividades_esportivas': 3 sinônimos.
+2025-04-22 09:58:43,613 - PLN_Processor - DEBUG -   - Chave 'automoveis_e_motocicletas': 4 sinônimos.
+2025-04-22 09:58:43,613 - PLN_Processor - DEBUG -   - Chave 'bancos': 4 sinônimos.
+2025-04-22 09:58:43,613 - PLN_Processor - DEBUG -   - Chave 'bebidas': 1 sinônimos.
+2025-04-22 09:58:43,613 - PLN_Processor - DEBUG -   - Chave 'bens_industriais': 3 sinônimos.
+2025-04-22 09:58:43,613 - PLN_Processor - DEBUG -   - Chave 'bicicletas': 4 sinônimos.
+2025-04-22 09:58:43,613 - PLN_Processor - DEBUG -   - Chave 'bolsa_de_valores': 5 sinônimos.
+2025-04-22 09:58:43,614 - PLN_Processor - DEBUG -   - Chave 'brazilian_depositary_receipt': 3 sinônimos.
+2025-04-22 09:58:43,614 - PLN_Processor - DEBUG -   - Chave 'brinquedos_e_jogos': 3 sinônimos.
+2025-04-22 09:58:43,614 - PLN_Processor - DEBUG -   - Chave 'calcados': 8 sinônimos.
+2025-04-22 09:58:43,614 - PLN_Processor - DEBUG -   - Chave 'carnes_e_derivados': 5 sinônimos.
+2025-04-22 09:58:43,614 - PLN_Processor - DEBUG -   - Chave 'certificado_de_deposito_de_acoes': 3 sinônimos.
+2025-04-22 09:58:43,615 - PLN_Processor - DEBUG -   - Chave 'cervejas_e_refrigerantes': 9 sinônimos.
+2025-04-22 09:58:43,615 - PLN_Processor - DEBUG -   - Chave 'classe_a': 1 sinônimos.
+2025-04-22 09:58:43,615 - PLN_Processor - DEBUG -   - Chave 'classe_b': 1 sinônimos.
+2025-04-22 09:58:43,615 - PLN_Processor - DEBUG -   - Chave 'codigo': 4 sinônimos.
+2025-04-22 09:58:43,615 - PLN_Processor - DEBUG -   - Chave 'codigo_negociacao': 4 sinônimos.
+2025-04-22 09:58:43,615 - PLN_Processor - DEBUG -   - Chave 'comercio': 3 sinônimos.
+2025-04-22 09:58:43,615 - PLN_Processor - DEBUG -   - Chave 'comercio_de_eletrodomesticos': 4 sinônimos.
+2025-04-22 09:58:43,616 - PLN_Processor - DEBUG -   - Chave 'comercio_de_materiais_de_transporte': 7 sinônimos.
+2025-04-22 09:58:43,616 - PLN_Processor - DEBUG -   - Chave 'comercio_e_distribuicao': 1 sinônimos.
+2025-04-22 09:58:43,616 - PLN_Processor - DEBUG -   - Chave 'comercio_e_distribuicao_de_medicamentos_e_outros_produtos': 5 sinônimos.
+2025-04-22 09:58:43,616 - PLN_Processor - DEBUG -   - Chave 'computadores_e_equipamentos': 3 sinônimos.
+2025-04-22 09:58:43,616 - PLN_Processor - DEBUG -   - Chave 'comunicacoes': 4 sinônimos.
+2025-04-22 09:58:43,616 - PLN_Processor - DEBUG -   - Chave 'construcao_civil': 1 sinônimos.
+2025-04-22 09:58:43,617 - PLN_Processor - DEBUG -   - Chave 'construcao_pesada': 2 sinônimos.
+2025-04-22 09:58:43,617 - PLN_Processor - DEBUG -   - Chave 'construcao_e_agricolas': 3 sinônimos.
+2025-04-22 09:58:43,617 - PLN_Processor - DEBUG -   - Chave 'construcao_e_engenharia': 1 sinônimos.
+2025-04-22 09:58:43,617 - PLN_Processor - DEBUG -   - Chave 'consumo_ciclico': 4 sinônimos.
+2025-04-22 09:58:43,617 - PLN_Processor - DEBUG -   - Chave 'consumo_nao_ciclico': 7 sinônimos.
+2025-04-22 09:58:43,617 - PLN_Processor - DEBUG -   - Chave 'corretoras_de_seguros_e_resseguros': 8 sinônimos.
+2025-04-22 09:58:43,618 - PLN_Processor - DEBUG -   - Chave 'debenture': 4 sinônimos.
+2025-04-22 09:58:43,618 - PLN_Processor - DEBUG -   - Chave 'diversos': 1 sinônimos.
+2025-04-22 09:58:43,618 - PLN_Processor - DEBUG -   - Chave 'eletrodomesticos': 4 sinônimos.
+2025-04-22 09:58:43,618 - PLN_Processor - DEBUG -   - Chave 'embalagens': 6 sinônimos.
+2025-04-22 09:58:43,618 - PLN_Processor - DEBUG -   - Chave 'empresa': 5 sinônimos.
+2025-04-22 09:58:43,618 - PLN_Processor - DEBUG -   - Chave 'empresa_capital_aberto': 5 sinônimos.
+2025-04-22 09:58:43,619 - PLN_Processor - DEBUG -   - Chave 'energia_eletrica': 7 sinônimos.
+2025-04-22 09:58:43,619 - PLN_Processor - DEBUG -   - Chave 'engenharia_consultiva': 3 sinônimos.
+2025-04-22 09:58:43,619 - PLN_Processor - DEBUG -   - Chave 'equipamentos': 7 sinônimos.
+2025-04-22 09:58:43,619 - PLN_Processor - DEBUG -   - Chave 'equipamentos_e_servicos': 5 sinônimos.
+2025-04-22 09:58:43,619 - PLN_Processor - DEBUG -   - Chave 'exploracao_refino_e_distribuicao': 7 sinônimos.
+2025-04-22 09:58:43,620 - PLN_Processor - DEBUG -   - Chave 'exploracao_de_imoveis': 12 sinônimos.
+2025-04-22 09:58:43,620 - PLN_Processor - DEBUG -   - Chave 'exploracao_de_rodovias': 3 sinônimos.
+2025-04-22 09:58:43,620 - PLN_Processor - DEBUG -   - Chave 'ferroviario': 7 sinônimos.
+2025-04-22 09:58:43,620 - PLN_Processor - DEBUG -   - Chave 'fertilizantes_e_defensivos': 5 sinônimos.
+2025-04-22 09:58:43,620 - PLN_Processor - DEBUG -   - Chave 'financeiro': 6 sinônimos.
+2025-04-22 09:58:43,620 - PLN_Processor - DEBUG -   - Chave 'fios_e_tecidos': 7 sinônimos.
+2025-04-22 09:58:43,621 - PLN_Processor - DEBUG -   - Chave 'gas': 3 sinônimos.
+2025-04-22 09:58:43,621 - PLN_Processor - DEBUG -   - Chave 'gestao_de_recursos_e_investimentos': 3 sinônimos.
+2025-04-22 09:58:43,621 - PLN_Processor - DEBUG -   - Chave 'hidroviario': 7 sinônimos.
+2025-04-22 09:58:43,621 - PLN_Processor - DEBUG -   - Chave 'holdings_diversificadas': 3 sinônimos.
+2025-04-22 09:58:43,621 - PLN_Processor - DEBUG -   - Chave 'hoteis_e_restaurantes': 1 sinônimos.
+2025-04-22 09:58:43,621 - PLN_Processor - DEBUG -   - Chave 'hotelaria': 5 sinônimos.
+2025-04-22 09:58:43,622 - PLN_Processor - DEBUG -   - Chave 'incorporacoes': 4 sinônimos.
+2025-04-22 09:58:43,622 - PLN_Processor - DEBUG -   - Chave 'indice': 4 sinônimos.
+2025-04-22 09:58:43,622 - PLN_Processor - DEBUG -   - Chave 'indice_amplo': 4 sinônimos.
+2025-04-22 09:58:43,622 - PLN_Processor - DEBUG -   - Chave 'indice_setorial': 4 sinônimos.
+2025-04-22 09:58:43,622 - PLN_Processor - DEBUG -   - Chave 'industriais': 10 sinônimos.
+2025-04-22 09:58:43,623 - PLN_Processor - DEBUG -   - Chave 'intermediacao_imobiliaria': 9 sinônimos.
+2025-04-22 09:58:43,623 - PLN_Processor - DEBUG -   - Chave 'intermediarios_financeiros': 4 sinônimos.
+2025-04-22 09:58:43,623 - PLN_Processor - DEBUG -   - Chave 'laticinios': 5 sinônimos.
+2025-04-22 09:58:43,623 - PLN_Processor - DEBUG -   - Chave 'madeira': 8 sinônimos.
+2025-04-22 09:58:43,623 - PLN_Processor - DEBUG -   - Chave 'madeira_e_papel': 1 sinônimos.
+2025-04-22 09:58:43,623 - PLN_Processor - DEBUG -   - Chave 'maquinas_e_equipamentos': 1 sinônimos.
+2025-04-22 09:58:43,623 - PLN_Processor - DEBUG -   - Chave 'materiais_basicos': 5 sinônimos.
+2025-04-22 09:58:43,624 - PLN_Processor - DEBUG -   - Chave 'materiais_diversos': 5 sinônimos.
+2025-04-22 09:58:43,624 - PLN_Processor - DEBUG -   - Chave 'material_aeronautico_e_de_defesa': 5 sinônimos.
+2025-04-22 09:58:43,624 - PLN_Processor - DEBUG -   - Chave 'material_rodoviario': 8 sinônimos.
+2025-04-22 09:58:43,624 - PLN_Processor - DEBUG -   - Chave 'material_de_transporte': 1 sinônimos.
+2025-04-22 09:58:43,624 - PLN_Processor - DEBUG -   - Chave 'medicamentos_e_outros_produtos': 6 sinônimos.
+2025-04-22 09:58:43,624 - PLN_Processor - DEBUG -   - Chave 'midia': 1 sinônimos.
+2025-04-22 09:58:43,625 - PLN_Processor - DEBUG -   - Chave 'mineracao': 2 sinônimos.
+2025-04-22 09:58:43,625 - PLN_Processor - DEBUG -   - Chave 'minerais_metalicos': 9 sinônimos.
+2025-04-22 09:58:43,625 - PLN_Processor - DEBUG -   - Chave 'motores_compressores_e_outros': 9 sinônimos.
+2025-04-22 09:58:43,625 - PLN_Processor - DEBUG -   - Chave 'moveis': 4 sinônimos.
+2025-04-22 09:58:43,625 - PLN_Processor - DEBUG -   - Chave 'negociado_em_diferentes_pregoes': 1 sinônimos.
+2025-04-22 09:58:43,625 - PLN_Processor - DEBUG -   - Chave 'negociado_em_pregao': 1 sinônimos.
+2025-04-22 09:58:43,626 - PLN_Processor - DEBUG -   - Chave 'ordinaria': 4 sinônimos.
+2025-04-22 09:58:43,626 - PLN_Processor - DEBUG -   - Chave 'outros': 4 sinônimos.
+2025-04-22 09:58:43,626 - PLN_Processor - DEBUG -   - Chave 'papel_e_celulose': 3 sinônimos.
+2025-04-22 09:58:43,626 - PLN_Processor - DEBUG -   - Chave 'petroleo_gas_e_biocombustivel': 11 sinônimos.
+2025-04-22 09:58:43,626 - PLN_Processor - DEBUG -   - Chave 'petroquimicos': 4 sinônimos.
+2025-04-22 09:58:43,626 - PLN_Processor - DEBUG -   - Chave 'preferencial': 4 sinônimos.
+2025-04-22 09:58:43,627 - PLN_Processor - DEBUG -   - Chave 'pregao': 7 sinônimos.
+2025-04-22 09:58:43,627 - PLN_Processor - DEBUG -   - Chave 'previdencia_e_seguros': 1 sinônimos.
+2025-04-22 09:58:43,627 - PLN_Processor - DEBUG -   - Chave 'producao_de_eventos_e_shows': 7 sinônimos.
+2025-04-22 09:58:43,627 - PLN_Processor - DEBUG -   - Chave 'produtos_diversos': 10 sinônimos.
+2025-04-22 09:58:43,627 - PLN_Processor - DEBUG -   - Chave 'produtos_de_limpeza': 5 sinônimos.
+2025-04-22 09:58:43,628 - PLN_Processor - DEBUG -   - Chave 'produtos_de_uso_pessoal': 7 sinônimos.
+2025-04-22 09:58:43,628 - PLN_Processor - DEBUG -   - Chave 'produtos_de_uso_pessoal_e_de_limpeza': 1 sinônimos.
+2025-04-22 09:58:43,628 - PLN_Processor - DEBUG -   - Chave 'produtos_para_construcao': 4 sinônimos.
+2025-04-22 09:58:43,628 - PLN_Processor - DEBUG -   - Chave 'programas_de_fidelizacao': 11 sinônimos.
+2025-04-22 09:58:43,628 - PLN_Processor - DEBUG -   - Chave 'programas_e_servicos': 4 sinônimos.
+2025-04-22 09:58:43,628 - PLN_Processor - DEBUG -   - Chave 'publicidade_e_propaganda': 4 sinônimos.
+2025-04-22 09:58:43,628 - PLN_Processor - DEBUG -   - Chave 'quimico': 1 sinônimos.
+2025-04-22 09:58:43,629 - PLN_Processor - DEBUG -   - Chave 'quimicos_diversos': 4 sinônimos.
+2025-04-22 09:58:43,629 - PLN_Processor - DEBUG -   - Chave 'resseguradoras': 5 sinônimos.
+2025-04-22 09:58:43,629 - PLN_Processor - DEBUG -   - Chave 'restaurante_e_similares': 3 sinônimos.
+2025-04-22 09:58:43,629 - PLN_Processor - DEBUG -   - Chave 'rodoviario': 6 sinônimos.
+2025-04-22 09:58:43,629 - PLN_Processor - DEBUG -   - Chave 'saude': 3 sinônimos.
+2025-04-22 09:58:43,629 - PLN_Processor - DEBUG -   - Chave 'securitizadoras_de_recebiveis': 4 sinônimos.
+2025-04-22 09:58:43,630 - PLN_Processor - DEBUG -   - Chave 'seguradoras': 4 sinônimos.
+2025-04-22 09:58:43,630 - PLN_Processor - DEBUG -   - Chave 'servicos': 1 sinônimos.
+2025-04-22 09:58:43,630 - PLN_Processor - DEBUG -   - Chave 'servicos_diversos': 4 sinônimos.
+2025-04-22 09:58:43,630 - PLN_Processor - DEBUG -   - Chave 'servicos_educacionais': 7 sinônimos.
+2025-04-22 09:58:43,630 - PLN_Processor - DEBUG -   - Chave 'servicos_financeiros_diversos': 6 sinônimos.
+2025-04-22 09:58:43,630 - PLN_Processor - DEBUG -   - Chave 'servicos_medicos_hospitalares_diagnosticos': 9 sinônimos.
+2025-04-22 09:58:43,631 - PLN_Processor - DEBUG -   - Chave 'servicos_de_apoio_e_armazenagem': 7 sinônimos.
+2025-04-22 09:58:43,631 - PLN_Processor - DEBUG -   - Chave 'setor_atuacao': 7 sinônimos.
+2025-04-22 09:58:43,631 - PLN_Processor - DEBUG -   - Chave 'siderurgia': 5 sinônimos.
+2025-04-22 09:58:43,631 - PLN_Processor - DEBUG -   - Chave 'siderurgia_e_metalurgia': 1 sinônimos.
+2025-04-22 09:58:43,631 - PLN_Processor - DEBUG -   - Chave 'sociedade_de_arrendamento_mercantil': 5 sinônimos.
+2025-04-22 09:58:43,631 - PLN_Processor - DEBUG -   - Chave 'sociedade_de_credito_e_financiamento': 6 sinônimos.
+2025-04-22 09:58:43,632 - PLN_Processor - DEBUG -   - Chave 'tecidos_vestuario_calcados': 8 sinônimos.
+2025-04-22 09:58:43,632 - PLN_Processor - DEBUG -   - Chave 'tecnologia_da_informacao': 5 sinônimos.
+2025-04-22 09:58:43,632 - PLN_Processor - DEBUG -   - Chave 'telecomunicacoes': 5 sinônimos.
+2025-04-22 09:58:43,632 - PLN_Processor - DEBUG -   - Chave 'transporte': 1 sinônimos.
+2025-04-22 09:58:43,632 - PLN_Processor - DEBUG -   - Chave 'utensilios_domesticos': 6 sinônimos.
+2025-04-22 09:58:43,632 - PLN_Processor - DEBUG -   - Chave 'utilidade_publica': 4 sinônimos.
+2025-04-22 09:58:43,633 - PLN_Processor - DEBUG -   - Chave 'valor_mobiliario': 5 sinônimos.
+2025-04-22 09:58:43,633 - PLN_Processor - DEBUG -   - Chave 'valor_mobiliario_negociado': 5 sinônimos.
+2025-04-22 09:58:43,633 - PLN_Processor - DEBUG -   - Chave 'vestuario': 7 sinônimos.
+2025-04-22 09:58:43,633 - PLN_Processor - DEBUG -   - Chave 'viagens_e_lazer': 5 sinônimos.
+2025-04-22 09:58:43,633 - PLN_Processor - DEBUG -   - Chave 'precoabertura': 2 sinônimos.
+2025-04-22 09:58:43,633 - PLN_Processor - DEBUG -   - Chave 'precofechamento': 5 sinônimos.
+2025-04-22 09:58:43,634 - PLN_Processor - DEBUG -   - Chave 'precomedio': 3 sinônimos.
+2025-04-22 09:58:43,634 - PLN_Processor - DEBUG -   - Chave 'precomaximo': 4 sinônimos.
+2025-04-22 09:58:43,634 - PLN_Processor - DEBUG -   - Chave 'precominimo': 4 sinônimos.
+2025-04-22 09:58:43,634 - PLN_Processor - DEBUG -   - Chave 'totalnegocios': 4 sinônimos.
+2025-04-22 09:58:43,634 - PLN_Processor - DEBUG -   - Chave 'volumetotalnegociado': 5 sinônimos.
+2025-04-22 09:58:43,634 - PLN_Processor - DEBUG -   - Chave 'quantidadepapeisnegociados': 6 sinônimos.
+2025-04-22 09:58:43,635 - PLN_Processor - DEBUG -   - Chave 'variacaointradiariaabsoluta': 4 sinônimos.
+2025-04-22 09:58:43,635 - PLN_Processor - DEBUG -   - Chave 'variacaopercentual': 7 sinônimos.
+2025-04-22 09:58:43,635 - PLN_Processor - DEBUG -   - Chave 'intervalointradiariopercentual': 3 sinônimos.
+2025-04-22 09:58:43,635 - PLN_Processor - INFO - Dicionário 'resultado_similaridade.txt' carregado: 149 chaves.
+2025-04-22 09:58:43,635 - PLN_Processor - INFO - Configs carregadas.
+2025-04-22 09:58:43,635 - PLN_Processor - INFO - Processando NLP...
+2025-04-22 09:58:43,636 - PLN_Processor - DEBUG - Extraindo spaCy de: 'Qual foi o preço de abertura da CBAV3 em 08/05/2023?...'
+2025-04-22 09:58:43,657 - PLN_Processor - DEBUG -   - Análise de dependências SPO...
+2025-04-22 09:58:43,658 - PLN_Processor - DEBUG -     - Suj (nsubj): 'o preço de abertura da CBAV3 em 08/05/2023'
+2025-04-22 09:58:43,658 - PLN_Processor - DEBUG -   - Extração NER...
+2025-04-22 09:58:43,658 - PLN_Processor - DEBUG -     - NER: 'CBAV3' (ORG)
+2025-04-22 09:58:43,659 - PLN_Processor - INFO - Extração spaCy final. SPO: {'sujeito': ['o preço de abertura da CBAV3 em 08/05/2023'], 'predicado': [], 'objeto': []}, NER: {'ORG': ['CBAV3']}
+2025-04-22 09:58:43,659 - PLN_Processor - DEBUG - Extraindo data de: 'Qual foi o preço de abertura da CBAV3 em 08/05/2023?'
+2025-04-22 09:58:43,661 - PLN_Processor - INFO - Data '08/05/2023' -> 2023-05-08
+2025-04-22 09:58:43,661 - PLN_Processor - INFO - NLP concluído.
+2025-04-22 09:58:43,661 - PLN_Processor - INFO - Buscando template...
+2025-04-22 09:58:43,661 - PLN_Processor - DEBUG - Buscando template para 'qual foi o preco de abertura da cbav3 em 08052023' (Limiar: 0.65)
+2025-04-22 09:58:43,662 - PLN_Processor - DEBUG -     -> 'Template 1A', Sim: 0.7736
+2025-04-22 09:58:43,662 - PLN_Processor - DEBUG -       >> NOVA MAIOR SIM! <<
+2025-04-22 09:58:43,663 - PLN_Processor - DEBUG -     -> 'Template 1B', Sim: 1.0000
+2025-04-22 09:58:43,664 - PLN_Processor - DEBUG -       >> NOVA MAIOR SIM! <<
+2025-04-22 09:58:43,664 - PLN_Processor - DEBUG -     -> 'Template 2A', Sim: 0.4894
+2025-04-22 09:58:43,665 - PLN_Processor - DEBUG -     -> 'Template 3A', Sim: 0.3294
+2025-04-22 09:58:43,666 - PLN_Processor - DEBUG -     -> 'Template 4A', Sim: 0.5345
+2025-04-22 09:58:43,667 - PLN_Processor - DEBUG -     -> 'Template 4B', Sim: 0.4333
+2025-04-22 09:58:43,668 - PLN_Processor - DEBUG -     -> 'Template 5A', Sim: 0.7200
+2025-04-22 09:58:43,668 - PLN_Processor - DEBUG -     -> 'Template 5B', Sim: 0.6195
+2025-04-22 09:58:43,669 - PLN_Processor - DEBUG -     -> 'Template 5C', Sim: 0.7143
+2025-04-22 09:58:43,670 - PLN_Processor - DEBUG -     -> 'Template 6A', Sim: 0.4286
+2025-04-22 09:58:43,671 - PLN_Processor - DEBUG -     -> 'Template 7A', Sim: 0.4029
+2025-04-22 09:58:43,673 - PLN_Processor - DEBUG -     -> 'Template 7B', Sim: 0.4211
+2025-04-22 09:58:43,673 - PLN_Processor - DEBUG -     -> 'Template 7C', Sim: 0.4252
+2025-04-22 09:58:43,674 - PLN_Processor - DEBUG -     -> 'Template 7D', Sim: 0.4602
+2025-04-22 09:58:43,675 - PLN_Processor - DEBUG -     -> 'Template 7E', Sim: 0.4034
+2025-04-22 09:58:43,676 - PLN_Processor - DEBUG -     -> 'Template 7F', Sim: 0.4167
+2025-04-22 09:58:43,677 - PLN_Processor - DEBUG -     -> 'Template 8A', Sim: 0.3333
+2025-04-22 09:58:43,678 - PLN_Processor - DEBUG -     -> 'Template 8B', Sim: 0.3051
+2025-04-22 09:58:43,678 - PLN_Processor - INFO - Template similar: Nome='Template 1B', Sim=1.0000
+2025-04-22 09:58:43,679 - PLN_Processor - INFO - Template 'Template 1B' selecionado (Sim: 1.0000).
+2025-04-22 09:58:43,679 - PLN_Processor - INFO - Mapeando placeholders semânticos...
+2025-04-22 09:58:43,679 - PLN_Processor - DEBUG - Iniciando mapeamento semântico...
+2025-04-22 09:58:43,679 - PLN_Processor - DEBUG -   - Map #DATA: 2023-05-08
+2025-04-22 09:58:43,679 - PLN_Processor - DEBUG -   - #ENT via NER ORG (Ticker): 'CBAV3'
+2025-04-22 09:58:43,680 - PLN_Processor - INFO -   - Map #ENTIDADE: 'CBAV3' (NER ORG (Ticker))
+2025-04-22 09:58:43,685 - PLN_Processor - DEBUG -   - Texto candidato #VALOR_DESEJADO: 'preço de abertura da'
+2025-04-22 09:58:43,686 - PLN_Processor - DEBUG - Recebido para buscar termo: 'preço de abertura da'
+2025-04-22 09:58:43,686 - PLN_Processor - DEBUG - Buscando termo no dicionário para frase normalizada: 'preco de abertura da' (Limiar: 0.75)
+2025-04-22 09:58:43,805 - PLN_Processor - DEBUG -     -> Novo melhor (da chave): Chave='precoabertura' Similaridade=0.7879
+2025-04-22 09:58:43,805 - PLN_Processor - DEBUG -     -> Novo melhor (de sinônimo 'preco de abertura'): Chave='precoabertura' Similaridade=0.9189
+2025-04-22 09:58:43,813 - PLN_Processor - INFO - Melhor termo encontrado para 'preço de abertura da': Chave='precoabertura' (Match 'preco de abertura', Sim: 0.92)
+2025-04-22 09:58:43,813 - PLN_Processor - INFO -   - Map #VALOR_DESEJADO: 'precoabertura' (de 'preço de abertura da')
+2025-04-22 09:58:43,813 - PLN_Processor - DEBUG -   - Texto norm para tipo ação: 'qual foi o preco de abertura da cbav3 em 08052023'
+2025-04-22 09:58:43,814 - PLN_Processor - DEBUG -   - Nenhum #TIPO_ACAO explícito.
+2025-04-22 09:58:43,815 - PLN_Processor - DEBUG -   - Nenhum #SETOR explícito.
+2025-04-22 09:58:43,815 - PLN_Processor - INFO - Mapeamentos semânticos finais: {'#DATA': '2023-05-08', '#ENTIDADE': 'CBAV3', '#VALOR_DESEJADO': 'precoabertura'}
+2025-04-22 09:58:43,815 - PLN_Processor - INFO - Mapeamento concluído.
+2025-04-22 09:58:43,816 - PLN_Processor - INFO - Validando placeholders...
+2025-04-22 09:58:43,816 - PLN_Processor - INFO - Validação OK para 'Template 1B'.
+2025-04-22 09:58:43,816 - PLN_Processor - INFO - Construindo JSON de resposta...
+2025-04-22 09:58:43,816 - PLN_Processor - DEBUG - JSON final para stdout: {"template_nome": "Template 1B", "mapeamentos": {"#DATA": "2023-05-08", "#ENTIDADE": "CBAV3", "#VALOR_DESEJADO": "precoabertura"}, "_debug_info": {"pergunta_original": "Qual foi o preço de abertura da CBAV3 em 08/05/2023?", "elementos_extraidos_nlp": {"sujeito": ["o preço de abertura da CBAV3 em 08/05/2023"], "predicado": [], "objeto": []}, "entidades_nomeadas_nlp": {"ORG": ["CBAV3"]}, "data_extraida_nlp": "2023-05-08", "similaridade_template": 1.0, "linha_template_correspondente": "Template 1B - Qual foi o preço de abertura da CBAV3 em 08/05/2023?", "placeholders_requeridos_verificados": ["#DATA", "#ENTIDADE", "#VALOR_DESEJADO"], "placeholders_faltando_verificados": []}}
+2025-04-22 09:58:43,816 - PLN_Processor - INFO - Enviando resposta para stdout...
+2025-04-22 09:58:43,816 - PLN_Processor - INFO - --- Processamento PLN Script concluído com sucesso ---

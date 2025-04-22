@@ -5,11 +5,17 @@
 ?S2 - ?valor_mobiliario
 ?S3 - ?negociado
 ?S4 - ?pregao
+<<<<<<< HEAD
 ?S5 - ?negociado_diferentes
 
 ?O1 - ?codigo
 ?O2 - #DATA 
 ?O3 - ?setor_atuacao
+=======
+
+?O1 - ?codigo
+?O2 - #DATA 
+>>>>>>> 90d16c9ebcd9eb1db631c342467b8c9f371c2b93
 
 # Mapeamento Variável Genérica de Resposta -> Placeholder Semântico GERAL
 

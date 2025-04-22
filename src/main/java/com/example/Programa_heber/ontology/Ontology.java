@@ -9,7 +9,6 @@ import org.apache.jena.reasoner.rulesys.GenericRuleReasoner;
 import org.apache.jena.reasoner.rulesys.Rule;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.PrintUtil;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
@@ -36,14 +35,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.apache.jena.query.*;
 
 @Component
-public class StockMarketOntology {
+public class Ontology {
 
-    private static final Logger logger = LoggerFactory.getLogger(StockMarketOntology.class);
+    private static final Logger logger = LoggerFactory.getLogger(Ontology.class);
 
     private OntModel baseOntology;
     private InfModel inferenceModel;
@@ -94,7 +92,7 @@ public class StockMarketOntology {
     private static final DateTimeFormatter ISO_DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
 
-    public StockMarketOntology() {
+    public Ontology() {
         logger.debug("Construtor StockMarketOntology chamado.");
         // Inicializa propriedades e classes (ocorreEmData é Datatype)
         this.TEM_VALOR_MOBILIARIO = ResourceFactory.createProperty(BASE_URI + "temValorMobiliarioNegociado");

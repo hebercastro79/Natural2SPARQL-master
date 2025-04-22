@@ -23,17 +23,25 @@ FILTER (?S1 = <...#ENTIDADE>) .
 }
 
 Template 2A - Qual o código de negociação da ação da Gerdau?
+<<<<<<< HEAD
 SELECT DISTINCT ?empresa ?valor_mobiliario ?negociado ?pregao ?codigo 
  WHERE {
 ?S1 <...#P1> ?S2  .
 ?S2 <...#P3> ?S3 .
 ?S2 <...#P2> ?O1 .
 ?S3 <...#P4> ?S4 .
+=======
+SELECT ?empresa ?valor_mobiliario ?codigo
+ WHERE {
+?S1 <...#P1> ?S2  .
+?S2 <...#P2> ?codigo .         
+>>>>>>> 90d16c9ebcd9eb1db631c342467b8c9f371c2b93
 FILTER (?S1 = <...#ENTIDADE>) .
 }
 
 Template 3A - Quais são as ações do setor elétrico?
 
+<<<<<<< HEAD
 SELECT DISTINCT ?empresa ?valor_mobiliario ?negociado ?pregao ?codigo ?setor_atuacao 
  WHERE {
 ?S1 <...#P1> ?S2  .
@@ -42,6 +50,13 @@ SELECT DISTINCT ?empresa ?valor_mobiliario ?negociado ?pregao ?codigo ?setor_atu
 ?S3 <...#P4> ?S4 .
 ?S1 <...#P9> ?O3 .
 ?O3 <...#P8> <...#SETOR> .        
+=======
+SELECT DISTINCT ?codigo
+ WHERE {
+?S1 <...#P9> <...#SETOR> .   
+?S1 <...#P1> ?S2 .
+?S2 <...#P2> ?codigo .         
+>>>>>>> 90d16c9ebcd9eb1db631c342467b8c9f371c2b93
  }
 
 Template 4A - Qual foi o volume negociado nas ações do setor bancário em 05/05/2023?
