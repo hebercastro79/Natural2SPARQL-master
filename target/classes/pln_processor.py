@@ -1,467 +1,329 @@
+# -*- coding: utf-8 -*-
 import nltk
 import spacy
 import difflib
 import re
 import unicodedata
-from nltk.stem.rslp import RSLPStemmer
+# from nltk.stem.rslp import RSLPStemmer
 import logging
 import sys
 import json
 import os
 from datetime import datetime, timedelta
 import io
-from pathlib import Path # Usar pathlib para caminhos mais robustos
+from pathlib import Path
+import traceback
 
 # --- Configuração Inicial Essencial ---
-# Tenta garantir que stdout/stderr usem UTF-8 e substituam erros.
 try:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-except Exception as e_enc:
-    print(f"AVISO URGENTE: Não foi possível forçar UTF-8 em stdout/stderr. Erro: {e_enc}", file=sys.__stderr__)
+except Exception as e_enc: print(f"AVISO URGENTE: Falha UTF-8: {e_enc}", file=sys.__stderr__)
 
-# --- Configuração de Logging (Arquivo e Stderr) ---
+# --- DEFINIÇÃO DO LOGGER E FUNÇÃO DE ERRO ---
 log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 _logger = logging.getLogger("PLN_Processor")
 _logger.setLevel(logging.DEBUG)
-
-if _logger.hasHandlers():
-    _logger.handlers.clear()
-
-_SCRIPT_DIR_PATH = Path(__file__).parent.resolve()
+if _logger.hasHandlers(): _logger.handlers.clear()
+try: _SCRIPT_DIR_PATH = Path(__file__).parent.resolve()
+except NameError: _SCRIPT_DIR_PATH = Path(".").resolve()
 _log_file_path = _SCRIPT_DIR_PATH / 'pln_processor.log'
-
 try:
-    file_handler = logging.FileHandler(_log_file_path, encoding='utf-8', mode='w')
-    file_handler.setFormatter(log_formatter)
-    file_handler.setLevel(logging.DEBUG)
-    _logger.addHandler(file_handler)
-except Exception as e:
-    print(f"AVISO URGENTE: Não foi possível criar/abrir o arquivo de log '{_log_file_path}'. Erro: {e}", file=sys.__stderr__)
-
+    file_handler = logging.FileHandler(_log_file_path, encoding='utf-8', mode='a')
+    file_handler.setFormatter(log_formatter); file_handler.setLevel(logging.DEBUG); _logger.addHandler(file_handler)
+except Exception as e: print(f"AVISO URGENTE: Falha log file '{_log_file_path}': {e}", file=sys.__stderr__)
 try:
     stderr_handler = logging.StreamHandler(sys.stderr)
-    stderr_handler.setFormatter(log_formatter)
-    stderr_handler.setLevel(logging.INFO)
-    _logger.addHandler(stderr_handler)
-except Exception as e:
-    print(f"AVISO: Não foi possível configurar logging para stderr. Erro: {e}", file=sys.stderr)
+    stderr_handler.setFormatter(log_formatter); stderr_handler.setLevel(logging.INFO); _logger.addHandler(stderr_handler)
+except Exception as e: print(f"AVISO: Falha log stderr: {e}", file=sys.stderr)
 
-# -----------------------------------------------------
-
-# Função para imprimir JSON de erro e sair (usa stdout)
 def fail_with_json_error(error_message, details=None, status_code=1):
-    """Loga o erro detalhado e imprime um JSON de erro para stdout antes de sair."""
     error_payload = {"erro": error_message}
     if details:
-        try:
-            details_str = str(details)
-            if len(details_str) > 500:
-                 details_str = details_str[:497] + "..."
-            error_payload["detalhes"] = details_str
-        except Exception:
-            error_payload["detalhes"] = "Erro ao serializar detalhes do erro."
-    _logger.error(f"Finalizando com erro: {error_message} - Detalhes: {details}", exc_info=True)
-    try:
-        print(json.dumps(error_payload, ensure_ascii=False))
-    except Exception as json_e:
-        _logger.critical(f"Erro CRÍTICO ao gerar JSON de erro final: {json_e}")
-        print(f'{{"erro": "Erro critico ao gerar JSON de erro.", "detalhes": "{str(json_e)[:100]}..."}}')
+        try: details_str = str(details); error_payload["detalhes"] = details_str[:500] + ('...' if len(details_str) > 500 else '')
+        except Exception: error_payload["detalhes"] = "Erro serializar detalhes."
+    _logger.error(f"Finalizando com erro: {error_message} - Detalhes: {details}", exc_info=True if status_code != 0 else False)
+    try: print(json.dumps(error_payload, ensure_ascii=False)); sys.stdout.flush()
+    except Exception as json_e: _logger.critical(f"Erro CRÍTICO gerar JSON erro: {json_e}"); print(f'{{"erro": "Erro critico JSON.", "detalhes": "{str(json_e)[:100]}..."}}'); sys.stdout.flush()
     sys.exit(status_code)
 
-# --- Carregamento de Modelos e Dados NLTK/SpaCy ---
-try:
-    # --- CORREÇÃO NLTK ---
-    nltk_downloader = nltk.downloader.Downloader() # Cria a instância
-    nltk_data_path = nltk_downloader.default_download_dir() # CHAMA o método com ()
+# --- Carregamento Modelos ---
+try: nlp = spacy.load("pt_core_news_sm"); _logger.info("Modelo spaCy carregado.")
+except Exception as e_spacy: fail_with_json_error("Erro ao inicializar spaCy.", e_spacy)
 
-    _logger.info(f"Verificando/Baixando dados NLTK em: {nltk_data_path}") # Agora loga o caminho correto
-
-    # Tentar criar o diretório se não existir
-    if not os.path.exists(nltk_data_path): # Agora usa a string do caminho
-        try:
-            os.makedirs(nltk_data_path, exist_ok=True)
-            _logger.info(f"Diretório NLTK data criado: {nltk_data_path}")
-        except OSError as mkdir_err:
-             _logger.warning(f"Não foi possível criar diretório NLTK data: {mkdir_err}. Download pode falhar.")
-
-    # Verifica e baixa punkt
-    punkt_path = os.path.join(nltk_data_path, 'tokenizers', 'punkt')
-    if not os.path.exists(punkt_path):
-        _logger.info("Tentando baixar NLTK 'punkt'...")
-        nltk_downloader.download('punkt', download_dir=nltk_data_path, quiet=False, raise_on_error=True) # Usa a instância
-        _logger.info("'punkt' baixado.")
-    else:
-        _logger.debug("'punkt' já existe.")
-
-    # Verifica e baixa rslp
-    rslp_path = os.path.join(nltk_data_path, 'stemmers', 'rslp')
-    if not os.path.exists(rslp_path):
-         _logger.info("Tentando baixar NLTK 'rslp'...")
-         nltk_downloader.download('rslp', download_dir=nltk_data_path, quiet=False, raise_on_error=True) # Usa a instância
-         _logger.info("'rslp' baixado.")
-    else:
-         _logger.debug("'rslp' já existe.")
-
-    _logger.info("Pacotes NLTK verificados/baixados (ou já existentes).")
-    # --- FIM DA CORREÇÃO NLTK ---
-
-except FileNotFoundError as fnf_nltk:
-     _logger.error(f"Erro de caminho NLTK: {fnf_nltk}. Tentando com NLTK_DATA...")
-     nltk_data_env = os.environ.get('NLTK_DATA')
-     if nltk_data_env and os.path.exists(nltk_data_env):
-          _logger.info(f"Tentando usar NLTK_DATA={nltk_data_env}")
-          nltk.data.path.append(nltk_data_env)
-          try:
-              nltk.word_tokenize("teste") # Força o uso para ver se funciona
-              _logger.info("NLTK parece funcionar com NLTK_DATA.")
-          except Exception as nltk_env_err:
-               fail_with_json_error("Erro ao usar NLTK mesmo com NLTK_DATA.", nltk_env_err)
-     else:
-          fail_with_json_error(f"Caminho NLTK padrão falhou ({nltk_data_path}) e NLTK_DATA não definido/válido.")
-except Exception as e_nltk_inner:
-    fail_with_json_error("Erro ao inicializar NLTK (verifique download/permissões/conexão).", e_nltk_inner)
-
-
-# Carregamento SpaCy
-try:
-    nlp = spacy.load("pt_core_news_sm")
-    _logger.info("Modelo spaCy 'pt_core_news_sm' carregado.")
-except Exception as e_spacy:
-    if isinstance(e_spacy, OSError):
-         fail_with_json_error("Erro ao carregar modelo spaCy 'pt_core_news_sm'. Modelo não encontrado ou corrompido?", f"Verifique a instalação. Detalhe: {e_spacy}")
-    else:
-         fail_with_json_error("Erro ao inicializar spaCy.", e_spacy)
-# --------------------------------------------
-
-# --- Constantes e Caminhos (Usando Relativos) ---
-# Assume que este script está em 'src/main/resources'
+# --- Constantes e Caminhos ---
 RESOURCES_DIR = _SCRIPT_DIR_PATH
-
 CAMINHO_DICIONARIO_SINONIMOS = RESOURCES_DIR / 'resultado_similaridade.txt'
 CAMINHO_PERGUNTAS_INTERESSE = RESOURCES_DIR / 'perguntas_de_interesse.txt'
-CAMINHO_DICIONARIO_VERBOS = RESOURCES_DIR / 'dicionario_verbos.txt' # Se usado
 
-_logger.info(f"Diretório base do script: {_SCRIPT_DIR_PATH}")
-_logger.info(f"Diretório de recursos assumido: {RESOURCES_DIR}")
-_logger.info(f"Tentando carregar dicionário de: {CAMINHO_DICIONARIO_SINONIMOS}")
-_logger.info(f"Tentando carregar perguntas de: {CAMINHO_PERGUNTAS_INTERESSE}")
+# --- CAMINHO CORRETO PARA O JSON ---
+JSON_FILENAME = 'empresa_nome_map.json' # <-- NOME CORRETO
+CAMINHO_MAPA_EMPRESAS_JSON_STR = JSON_FILENAME # Tenta no CWD primeiro (target/classes)
+CAMINHO_MAPA_EMPRESAS_JSON_ABS = (_SCRIPT_DIR_PATH / JSON_FILENAME) # Caminho absoluto
+# --- FIM CORREÇÃO ---
 
-if not CAMINHO_PERGUNTAS_INTERESSE.exists():
-    _logger.error(f"VERIFICAÇÃO INICIAL FALHOU: Arquivo de perguntas NÃO encontrado em: {CAMINHO_PERGUNTAS_INTERESSE}")
-if not CAMINHO_DICIONARIO_SINONIMOS.exists():
-    _logger.error(f"VERIFICAÇÃO INICIAL FALHOU: Arquivo de sinônimos NÃO encontrado em: {CAMINHO_DICIONARIO_SINONIMOS}")
-# --------------------------------------------------------------------
+_logger.info(f"Diretório base script (inferido): {_SCRIPT_DIR_PATH.resolve()}")
+_logger.info(f"Tentando carregar mapa empresas de (relativo): {CAMINHO_MAPA_EMPRESAS_JSON_STR}")
 
-# --- Lista de pronomes interrogativos ---
-pronomes_interrogativos = [
-    'quem', 'o que', 'que', 'qual', 'quais', 'quanto',
-    'quantos', 'onde', 'como', 'quando', 'por que', 'porquê'
-]
+# --- Carregamento do Mapa de Empresas JSON ---
+empresa_nome_map = {} # {CHAVE_UPPER -> NOME_CANONICO}
+if not os.path.exists(CAMINHO_MAPA_EMPRESAS_JSON_STR):
+     _logger.warning(f"Tentativa 1: Arquivo '{CAMINHO_MAPA_EMPRESAS_JSON_STR}' não encontrado no CWD. Tentando fallback absoluto: {CAMINHO_MAPA_EMPRESAS_JSON_ABS}")
+     if not os.path.exists(CAMINHO_MAPA_EMPRESAS_JSON_ABS):
+          _logger.error(f"Tentativa 2: Fallback absoluto '{CAMINHO_MAPA_EMPRESAS_JSON_ABS}' também FALHOU.")
+          fail_with_json_error("Arquivo config empresas ausente.", details=f"Não encontrado: {CAMINHO_MAPA_EMPRESAS_JSON_STR} ou {CAMINHO_MAPA_EMPRESAS_JSON_ABS}")
+     else:
+         CAMINHO_MAPA_EMPRESAS_JSON_STR = str(CAMINHO_MAPA_EMPRESAS_JSON_ABS)
+         _logger.info(f"Fallback absoluto {CAMINHO_MAPA_EMPRESAS_JSON_STR} encontrado!")
+try:
+    _logger.info(f"Abrindo JSON de: {CAMINHO_MAPA_EMPRESAS_JSON_STR}")
+    with open(CAMINHO_MAPA_EMPRESAS_JSON_STR, 'r', encoding='utf-8') as f_json:
+        empresa_nome_map_raw = json.load(f_json)
+        empresa_nome_map = {str(key).upper(): val for key, val in empresa_nome_map_raw.items()}
+        _logger.info(f"Carregados {len(empresa_nome_map)} mapeamentos do mapa de nomes.")
+except Exception as e_load_json:
+    fail_with_json_error("Erro carregar config empresas.", e_load_json)
+
+pronomes_interrogativos = ['quem', 'o que', 'que', 'qual', 'quais', 'quanto', 'quantos', 'onde', 'como', 'quando', 'por que', 'porquê']
 
 # --- Funções Auxiliares ---
 
+def normalize_key(text):
+    if not isinstance(text, str): return None
+    text = text.upper().strip()
+    try: text = ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+    except Exception as e_norm: print(f" Aviso: Falha acentos '{text[:50]}...': {e_norm}", file=sys.stderr)
+    text = re.sub(r'\b(S\.?A\.?|S/?A|CIA\.?|COMPANHIA|LTDA\.?|ON|PN|N[12]|PREF\.?|ORD\.?|NM|ED|EJ|MA)\b', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'[^\w]', '', text)
+    text = re.sub(r'\s+', '', text)
+    return text if text else None
+
 def carregar_arquivo_linhas(caminho: Path):
-    """Carrega linhas de um arquivo Path, com detecção de encoding e tratamento de erros."""
     caminho_str = str(caminho.resolve())
-    _logger.debug(f"Tentando carregar arquivo: {caminho_str}")
+    _logger.debug(f"Tentando carregar: {caminho_str}")
     try:
-        if not caminho.exists(): raise FileNotFoundError(f"Arquivo não encontrado: {caminho_str}")
-        if not caminho.is_file(): raise IOError(f"Não é um arquivo válido: {caminho_str}")
-        encodings_to_try = ['utf-8', 'latin-1', 'windows-1252']; content = None; detected_encoding = None; last_exception = None
-        for enc in encodings_to_try:
-            try:
-                content = caminho.read_text(encoding=enc)
-                _logger.info(f"Arquivo '{caminho.name}' lido com encoding: {enc}"); detected_encoding = enc; last_exception = None; break
-            except UnicodeDecodeError as ude: _logger.debug(f"Falha ao ler '{caminho.name}' com {enc}: {ude}"); last_exception = ude; continue
-            except Exception as inner_e: _logger.warning(f"Erro ao tentar ler '{caminho.name}' com {enc}: {inner_e}"); last_exception = inner_e; continue
-        if content is None: raise IOError(f"Não foi possível ler '{caminho.name}'") from last_exception
-        if detected_encoding == 'utf-8' and content.startswith('\ufeff'): content = content[1:]; _logger.debug(f"Removido BOM UTF-8 de '{caminho.name}'.")
-        linhas = [linha.strip() for linha in content.splitlines() if linha.strip()]
-        if not linhas: _logger.warning(f"Arquivo '{caminho.name}' vazio ou sem conteúdo útil.")
-        else: _logger.debug(f"Carregadas {len(linhas)} linhas de '{caminho.name}'.")
+        if not caminho.exists(): raise FileNotFoundError(f"Não encontrado: {caminho_str}")
+        if not caminho.is_file(): raise IOError(f"Não é arquivo: {caminho_str}")
+        for enc in ['utf-8', 'latin-1', 'windows-1252']:
+            try: content = caminho.read_text(encoding=enc); _logger.info(f"'{caminho.name}' lido com {enc}"); break
+            except UnicodeDecodeError: continue
+            except Exception as e: raise IOError(f"Erro leitura {enc}") from e
+        else: raise IOError(f"Impossível decodificar '{caminho.name}'")
+        if content.startswith('\ufeff'): content = content[1:]
+        linhas = [ln.strip() for ln in content.splitlines() if ln.strip()]
+        if not linhas: _logger.warning(f"'{caminho.name}' vazio.")
         return linhas
-    except FileNotFoundError as fnf_e: fail_with_json_error(f"Arquivo essencial '{caminho.name}' não encontrado.", details=f"Verificado: {caminho_str}")
-    except Exception as e: fail_with_json_error(f"Erro crítico ao ler '{caminho.name}'.", e)
+    except Exception as e: fail_with_json_error(f"Erro crítico ler '{caminho.name}'.", e)
 
 def carregar_dicionario_sinonimos(caminho: Path):
-    """Carrega dicionário de sinônimos do arquivo Path: chave=[(sinonimo, valor)]."""
-    dicionario = {}; linhas = carregar_arquivo_linhas(caminho); caminho_str = str(caminho.resolve())
-    _logger.info(f"Processando dicionário de sinônimos de '{caminho.name}'...")
+    dicionario = {}; linhas = carregar_arquivo_linhas(caminho)
+    _logger.info(f"Processando dic. sinônimos '{caminho.name}'...")
     try:
-        linha_num = 0; chave_regex = re.compile(r"^\s*([\w_]+)\s*=\s*\[(.*)\]\s*$"); valor_regex = re.compile(r"\(\s*'((?:[^'\\]|\\.)*)'\s*,\s*([\d\.]+)\s*\)")
-        for linha in linhas:
-            linha_num += 1;
+        chave_regex = re.compile(r"^\s*([\w_]+)\s*=\s*\[(.*)\]\s*$"); valor_regex = re.compile(r"\(\s*'((?:[^'\\]|\\.)*)'\s*,\s*([\d\.]+)\s*\)")
+        for i, linha in enumerate(linhas):
             if not linha or linha.startswith('#'): continue
             match = chave_regex.match(linha)
             if match:
-                chave = match.group(1).lower().strip(); valores_str = match.group(2); valores = []
-                for sin_match in valor_regex.finditer(valores_str):
-                    sinonimo = sin_match.group(1).replace("\\'", "'").replace("\\\\", "\\").strip(); valor_str = sin_match.group(2)
-                    try:
-                        valor = float(valor_str)
-                        if 0.0 <= valor <= 1.0: valores.append((sinonimo, valor))
-                        else: _logger.warning(f"Valor fora [0,1]: {valor} ('{sinonimo}', '{chave}') em '{caminho.name}', L{linha_num}")
-                    except ValueError: _logger.warning(f"Valor float inválido: '{valor_str}' ('{sinonimo}', '{chave}') em '{caminho.name}', L{linha_num}")
-                if valores:
-                    if chave in dicionario: _logger.warning(f"Chave duplicada: '{chave}' em '{caminho.name}', L{linha_num}.")
-                    dicionario[chave] = valores; _logger.debug(f"  - Chave '{chave}': {len(valores)} sinônimos.")
-                else: _logger.warning(f"Nenhum par válido para '{chave}' em '{caminho.name}', L{linha_num}.")
-            else: _logger.warning(f"Formato inválido: '{caminho.name}', L{linha_num}: {linha[:100]}...")
-    except Exception as e: fail_with_json_error(f"Erro no formato do dicionário '{caminho.name}'.", e)
-    if not dicionario: _logger.error(f"Dicionário '{caminho.name}' vazio!"); # fail_with_json_error(f"Dicionário '{caminho.name}' vazio.")
+                chave, val_str = match.group(1).lower().strip(), match.group(2); vals = []
+                for s_match in valor_regex.finditer(val_str):
+                    sin, v_str = s_match.group(1).replace("\\'", "'").strip(), s_match.group(2)
+                    try: v = float(v_str); vals.append((sin, v))
+                    except ValueError: _logger.warning(f"Valor inválido '{v_str}' ('{sin}', '{chave}') L{i+1}")
+                if vals: dicionario[chave] = vals
+            else: _logger.warning(f"Formato inválido dic. L{i+1}: {linha[:100]}...")
+    except Exception as e: fail_with_json_error(f"Erro formato dic. '{caminho.name}'.", e)
+    if not dicionario: _logger.error(f"Dicionário '{caminho.name}' vazio!");
     _logger.info(f"Dicionário '{caminho.name}' carregado: {len(dicionario)} chaves.")
     return dicionario
 
 def normalizar_texto(texto):
-    """Normaliza texto: minúsculas, remove acentos, remove caracteres de controle, pontuação básica."""
     if not texto: return ""
     try:
-        texto_norm = str(texto).strip().lower()
-        texto_norm = "".join(ch for ch in texto_norm if unicodedata.category(ch)[0] not in ('C', 'Z') or ch == ' ')
-        texto_norm = ''.join(c for c in unicodedata.normalize('NFD', texto_norm) if unicodedata.category(c) != 'Mn')
-        texto_norm = re.sub(r'[^\w\s-]', '', texto_norm).strip('-')
-        texto_norm = re.sub(r'\s+', ' ', texto_norm).strip()
-        return texto_norm
-    except Exception as e:
-        _logger.warning(f"Erro ao normalizar '{texto[:50]}...': {e}"); return str(texto).strip().lower()
+        t = str(texto).strip().lower()
+        t = "".join(ch for ch in t if unicodedata.category(ch)[0] not in ('C', 'Z') or ch == ' ')
+        t = ''.join(c for c in unicodedata.normalize('NFD', t) if unicodedata.category(c) != 'Mn')
+        t = re.sub(r'[^\w\s-]', '', t).strip('-').strip()
+        t = re.sub(r'\s+', ' ', t)
+        return t
+    except Exception as e: _logger.warning(f"Erro normalizar '{texto[:50]}...': {e}"); return str(texto).strip().lower()
 
 def extrair_entidades_spacy(texto):
-    """Extrai SPO e NER usando spaCy."""
     elementos = {"sujeito": [], "predicado": [], "objeto": []}; entidades_nomeadas = {}
     _logger.debug(f"Extraindo spaCy de: '{texto[:100]}...'");
     if not texto: return elementos, entidades_nomeadas
     try:
-        doc = nlp(texto); processed_tokens_indices = set()
-        _logger.debug("  - Análise de dependências SPO...")
-        for token in doc:
-            if token.i in processed_tokens_indices or token.text.lower() in pronomes_interrogativos: continue
-            if token.dep_ in ("nsubj", "nsubj:pass"):
-                subtree_tokens = list(token.subtree); sub_phrase = "".join(t.text_with_ws for t in subtree_tokens).strip()
-                if sub_phrase and token.text.lower() not in pronomes_interrogativos: elementos["sujeito"].append(sub_phrase); processed_tokens_indices.update(t.i for t in subtree_tokens); _logger.debug(f"    - Suj ({token.dep_}): '{sub_phrase}'")
-            elif token.dep_ in ("obj", "dobj", "iobj", "obl"):
-                 subtree_tokens = list(token.subtree); obj_phrase = "".join(t.text_with_ws for t in subtree_tokens).strip()
-                 if obj_phrase:
-                      obj_phrase_cleaned = re.sub(r'\s+(em|no dia)\s+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$', '', obj_phrase, flags=re.IGNORECASE).strip()
-                      if obj_phrase_cleaned: elementos["objeto"].append(obj_phrase_cleaned); processed_tokens_indices.update(t.i for t in subtree_tokens); _logger.debug(f"    - Obj/Obl ({token.dep_}): '{obj_phrase_cleaned}'")
-            elif token.pos_ == "VERB" and token.dep_ in ("ROOT", "conj", "xcomp", "ccomp"):
-                verbo_lemma = token.lemma_;
-                if verbo_lemma not in elementos["predicado"]: elementos["predicado"].append(verbo_lemma); _logger.debug(f"    - Pred ({token.dep_}): '{verbo_lemma}'")
-        for key in elementos: unique_elements_dict = {el: texto.find(el) for el in elementos[key] if el}; elementos[key] = sorted(unique_elements_dict, key=unique_elements_dict.get)
-        _logger.debug("  - Extração NER...")
+        doc = nlp(texto);
         for ent in doc.ents:
-            label = ent.label_; text = ent.text.strip().rstrip('.')
-            if text and not text.isdigit(): entidades_nomeadas.setdefault(label, []).append(text); _logger.debug(f"    - NER: '{text}' ({label})")
-        for label in entidades_nomeadas: unique_ents_dict = {ent: texto.find(ent) for ent in entidades_nomeadas[label]}; entidades_nomeadas[label] = sorted(unique_ents_dict, key=unique_ents_dict.get)
+            label = ent.label_; text = ent.text.strip().rstrip('?.!,;')
+            if text and not text.isdigit(): entidades_nomeadas.setdefault(label, []).append(text)
+        for label in entidades_nomeadas: entidades_nomeadas[label] = sorted(list(set(entidades_nomeadas[label])), key=lambda x: texto.find(x))
+        for token in doc:
+            if token.dep_ in ("nsubj", "nsubj:pass") and token.text.lower() not in pronomes_interrogativos : elementos["sujeito"].append(token.text)
+            elif token.dep_ in ("obj", "dobj", "iobj", "pobj", "obl", "attr", "acomp"): elementos["objeto"].append(token.text)
+            elif token.pos_ == "VERB" and token.dep_ == "ROOT": elementos["predicado"].append(token.lemma_)
+        for key in elementos: elementos[key] = sorted(list(set(elementos[key])), key=lambda x: texto.find(x))
         _logger.info(f"Extração spaCy final. SPO: {elementos}, NER: {entidades_nomeadas}")
-    except Exception as e: _logger.error(f"Erro GERAL extração spaCy: {e}", exc_info=True); elementos = {"sujeito": [], "predicado": [], "objeto": []}; entidades_nomeadas = {}
+    except Exception as e: _logger.error(f"Erro GERAL extração spaCy: {e}", exc_info=True); elementos = {}; entidades_nomeadas = {}
     return elementos, entidades_nomeadas
 
 def extrair_data(texto):
-    """Extrai data (vários formatos, hoje, ontem) e normaliza para AAAA-MM-DD."""
-    _logger.debug(f"Extraindo data de: '{texto}'"); padrao_dma = r'\b(\d{1,2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{4})\b'; padrao_amd = r'\b(\d{4})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{1,2})\b';
-    match_dma = re.search(padrao_dma, texto); match_amd = re.search(padrao_amd, texto); data_normalizada = None
-    match_prioritario = match_dma if match_dma else match_amd; is_dma = (match_prioritario == match_dma)
-    if match_prioritario:
-        try:
-            groups = match_prioritario.groups();
-            dia, mes, ano = (int(groups[0]), int(groups[1]), int(groups[2])) if is_dma else (int(groups[2]), int(groups[1]), int(groups[0]))
-            if 1 <= dia <= 31 and 1 <= mes <= 12 and 1900 < ano < 2100:
-                data_obj = datetime(ano, mes, dia); data_normalizada = data_obj.strftime("%Y-%m-%d"); _logger.info(f"Data '{match_prioritario.group(0)}' -> {data_normalizada}"); return data_normalizada
-            else: _logger.warning(f"Data inválida: d={dia}, m={mes}, a={ano} ('{match_prioritario.group(0)}')")
-        except (ValueError, IndexError) as ve: _logger.warning(f"Erro conversão data '{match_prioritario.group(0)}': {ve}")
-        except Exception as e_dt: _logger.warning(f"Erro inesperado data '{match_prioritario.group(0)}': {e_dt}")
-    texto_lower = texto.lower();
-    if "hoje" in texto_lower: _logger.info("'hoje' -> data atual"); return datetime.now().strftime("%Y-%m-%d")
-    if "ontem" in texto_lower: _logger.info("'ontem' -> dia anterior"); return (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    _logger.info("Nenhuma data reconhecível."); return None
+    _logger.debug(f"Extraindo data de: '{texto}'"); padrao_dma=r'\b(\d{1,2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{4})\b'; padrao_amd=r'\b(\d{4})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{1,2})\b';
+    match = re.search(padrao_dma, texto) or re.search(padrao_amd, texto); is_dma = (match and match.re.pattern == padrao_dma)
+    if match:
+        try: g=match.groups(); d,m,a=(int(g[0]),int(g[1]),int(g[2])) if is_dma else (int(g[2]),int(g[1]),int(g[0])); fmt=datetime(a,m,d).strftime("%Y-%m-%d"); _logger.info(f"Data '{match.group(0)}'->{fmt}"); return fmt
+        except: _logger.warning(f"Erro conversão data '{match.group(0)}'")
+    t = texto.lower()
+    if "hoje" in t or "hj" in t: _logger.info("'hoje'/'hj'->atual"); return datetime.now().strftime("%Y-%m-%d")
+    if "ontem" in t: _logger.info("'ontem'->anterior"); return (datetime.now()-timedelta(days=1)).strftime("%Y-%m-%d")
+    _logger.info("Nenhuma data reconhecida."); return None
 
-# --- CORREÇÃO UnboundLocalError ---
 def encontrar_termo_dicionario(frase, dicionario, limiar=0.70):
-    """Encontra a melhor chave no dicionário de sinônimos para uma frase, usando texto normalizado e similaridade."""
-    _logger.debug(f"Recebido para buscar termo: '{frase}'")
-
-    # Define frase_norm logo no início, mesmo que seja None ou "" temporariamente
-    frase_norm = None # Inicializa como None
-
-    if not dicionario or not frase:
-        _logger.debug(f"Dicionário ou frase de entrada vazia.")
-        return None
-
-    # Normaliza a frase de entrada AGORA
     frase_norm = normalizar_texto(frase)
-    if not frase_norm:
-        _logger.debug(f"Frase normalizada resultou vazia.")
-        return None
-
-    # Se chegou aqui, frase_norm DEFINITIVAMENTE tem um valor válido (string não vazia)
-
-    melhor_chave = None
-    maior_similaridade = limiar - 0.001 # Garante que a primeira > limiar seja pega
-    texto_que_deu_match = None
-
-    _logger.debug(f"Buscando termo no dicionário para frase normalizada: '{frase_norm}' (Limiar: {limiar:.2f})")
-
-    # Itera sobre as chaves do dicionário
+    if not dicionario or not frase_norm: return None
+    melhor_chave, maior_similaridade, texto_match = None, limiar - 0.01, None
     for chave, sinonimos in dicionario.items():
-        # Comparação com a chave principal (chave já está normalizada no carregamento)
-        # USO SEGURO DE frase_norm A PARTIR DAQUI
         sim_chave = difflib.SequenceMatcher(None, frase_norm, chave).ratio()
-        _logger.log(5, f"  Comparando '{frase_norm}' com CHAVE '{chave}': {sim_chave:.4f}")
-
-        if sim_chave > maior_similaridade:
-            maior_similaridade = sim_chave
-            melhor_chave = chave
-            texto_que_deu_match = chave
-            _logger.debug(f"    -> Novo melhor (da chave): Chave='{melhor_chave}' Similaridade={maior_similaridade:.4f}")
-
-        # Comparação com os sinônimos
+        if sim_chave > maior_similaridade: maior_similaridade, melhor_chave, texto_match = sim_chave, chave, chave
         for sinonimo, _ in sinonimos:
-            sinonimo_norm = normalizar_texto(sinonimo)
-            if not sinonimo_norm: continue
-            # USO SEGURO DE frase_norm A PARTIR DAQUI
-            sim_sin = difflib.SequenceMatcher(None, frase_norm, sinonimo_norm).ratio()
-            _logger.log(5, f"    Comparando '{frase_norm}' com SINONIMO '{sinonimo_norm}' (da chave '{chave}'): {sim_sin:.4f}")
+            sin_norm = normalizar_texto(sinonimo)
+            if sin_norm:
+                sim_sin = difflib.SequenceMatcher(None, frase_norm, sin_norm).ratio()
+                if sim_sin > maior_similaridade: maior_similaridade, melhor_chave, texto_match = sim_sin, chave, sinonimo
+    if melhor_chave: _logger.info(f"Termo para '{frase}': Chave='{melhor_chave}' (Match '{texto_match}', Sim: {maior_similaridade:.2f})"); return melhor_chave
+    else: _logger.info(f"Nenhum termo encontrado para '{frase}' >= {limiar:.2f}"); return None
 
-            if sim_sin > maior_similaridade:
-                maior_similaridade = sim_sin
-                melhor_chave = chave
-                texto_que_deu_match = sinonimo_norm
-                _logger.debug(f"    -> Novo melhor (de sinônimo '{sinonimo_norm}'): Chave='{melhor_chave}' Similaridade={maior_similaridade:.4f}")
-
-    # Verifica o limiar final
-    if maior_similaridade >= limiar and melhor_chave is not None:
-        _logger.info(f"Melhor termo encontrado para '{frase}': Chave='{melhor_chave}' (Match '{texto_que_deu_match}', Sim: {maior_similaridade:.2f})")
-        return melhor_chave
-    else:
-        _logger.info(f"Nenhum termo encontrado para '{frase}' >= {limiar:.2f} (Max: {maior_similaridade:.2f})")
-        return None
-# --- FIM DA CORREÇÃO ---
-
-
-def encontrar_pergunta_similar(pergunta_usuario, templates_linhas, limiar=0.70):
-    """Encontra a linha mais similar e extrai o NOME do template."""
-    maior_similaridade = 0.0; template_nome_final = None; linha_template_correspondente = None
-    if not templates_linhas: _logger.error("Lista de exemplos de perguntas vazia."); return None, 0, None
-    pergunta_usuario_norm = normalizar_texto(pergunta_usuario);
-    if not pergunta_usuario_norm: _logger.error("Pergunta do usuário normalizada vazia."); return None, 0, None
-    _logger.debug(f"Buscando template para '{pergunta_usuario_norm}' (Limiar: {limiar:.2f})")
-    for i, linha_template_original in enumerate(templates_linhas):
+def encontrar_pergunta_similar(pergunta_usuario, templates_linhas, limiar=0.65):
+    maior_sim, t_nome, t_linha = 0.0, None, None
+    if not templates_linhas: _logger.error("Lista exemplos vazia."); return None, 0, None
+    pu_norm = normalizar_texto(pergunta_usuario);
+    if not pu_norm: _logger.error("Pergunta usuário normalizada vazia."); return None, 0, None
+    _logger.debug(f"Buscando template para '{pu_norm}' (Limiar: {limiar:.2f})")
+    for i, linha_t in enumerate(templates_linhas):
+        if not linha_t or linha_t.startswith('#') or " - " not in linha_t: continue;
         try:
-            if not linha_template_original or linha_template_original.startswith('#'): continue; _logger.debug(f"  Analisando L{i+1}: '{linha_template_original[:100]}...'")
-            if " - " in linha_template_original:
-                partes = linha_template_original.split(" - ", 1); nome_template_atual, pergunta_exemplo = partes[0].strip(), partes[1].strip();
-                if not nome_template_atual or not pergunta_exemplo: _logger.warning(f"    Formato inválido L{i+1}."); continue;
-                template_norm = normalizar_texto(pergunta_exemplo);
-                if not template_norm: _logger.warning(f"    Exemplo normalizado vazio L{i+1}."); continue;
-                similaridade = difflib.SequenceMatcher(None, pergunta_usuario_norm, template_norm).ratio(); _logger.debug(f"    -> '{nome_template_atual}', Sim: {similaridade:.4f}")
-                if similaridade > maior_similaridade: _logger.debug(f"      >> NOVA MAIOR SIM! <<"); maior_similaridade, template_nome_final, linha_template_correspondente = similaridade, nome_template_atual, linha_template_original
-            else: _logger.warning(f"    Formato inválido L{i+1} (sem ' - ').")
-        except Exception as e: _logger.exception(f"Erro ao processar linha exemplo {i+1}")
-    if maior_similaridade < limiar: _logger.warning(f"Similaridade max ({maior_similaridade:.2f}) < limiar ({limiar:.2f})."); return None, maior_similaridade, None
-    _logger.info(f"Template similar: Nome='{template_nome_final}', Sim={maior_similaridade:.4f}"); return template_nome_final, maior_similaridade, linha_template_correspondente
+            nome_t, ex_t = [p.strip() for p in linha_t.split(" - ", 1)]
+            if nome_t and ex_t:
+                 ex_norm = normalizar_texto(ex_t)
+                 if ex_norm:
+                     sim = difflib.SequenceMatcher(None, pu_norm, ex_norm).ratio(); _logger.debug(f"    -> '{nome_t}', Sim: {sim:.4f}")
+                     if sim > maior_sim: maior_sim, t_nome, t_linha = sim, nome_t, linha_t
+        except: _logger.warning(f"Erro processar linha template {i+1}")
+    if maior_sim < limiar: _logger.warning(f"Similaridade max ({maior_sim:.2f}) < limiar ({limiar:.2f})."); return None, maior_sim, None
+    _logger.info(f"Template similar: Nome='{t_nome}', Sim={maior_sim:.4f}"); return t_nome, maior_sim, t_linha
 
-def mapear_para_placeholders(pergunta_usuario_original, elementos, entidades_nomeadas, data, dicionario_sinonimos):
-    """Mapeia elementos extraídos para placeholders semânticos."""
+# --- Função de Mapeamento ATUALIZADA ---
+def mapear_para_placeholders(pergunta_usuario_original, elementos, entidades_nomeadas, data, dicionario_sinonimos, nome_map):
+    """Mapeia elementos para placeholders, focando em extrair NOME canônico da entidade e VD por keyword."""
     mapeamentos = {}; _logger.debug("Iniciando mapeamento semântico...")
     if data: mapeamentos['#DATA'] = data; _logger.debug(f"  - Map #DATA: {data}")
-    entidade_principal_str, tipo_entidade_detectada = None, None; ner_order = ['ORG', 'GPE']; ticker_regex = r'^[A-Z]{4}\d{1,2}$'
+
+    # 1. Encontrar o Nome Canônico da Entidade
+    nome_canonico_encontrado, tipo_entidade_detectada = None, None
+    ner_order = ['ORG', 'GPE', 'MISC']; known_keys_upper = set(nome_map.keys())
+    entidades_ner_detectadas = []
     for label in ner_order:
-        if not entidade_principal_str and label in entidades_nomeadas:
-            for ent_text in entidades_nomeadas[label]:
-                ent_upper = ent_text.upper().strip();
-                if re.fullmatch(ticker_regex, ent_upper): entidade_principal_str, tipo_entidade_detectada = ent_upper, f"NER {label} (Ticker)"; _logger.debug(f"  - #ENT via {tipo_entidade_detectada}: '{entidade_principal_str}'"); break
-            if entidade_principal_str: break
-    if not entidade_principal_str and 'ORG' in entidades_nomeadas and entidades_nomeadas['ORG']: entidade_principal_str = entidades_nomeadas['ORG'][0].upper().strip(); tipo_entidade_detectada = "NER ORG (Genérico)"; _logger.debug(f"  - #ENT via {tipo_entidade_detectada}: '{entidade_principal_str}'")
-    if not entidade_principal_str:
-        _logger.warning("  - Sem entidade NER clara. Fallback SPO..."); textos_spo = elementos.get("sujeito", []) + elementos.get("objeto", [])
-        for texto_spo in textos_spo:
-             palavras = re.findall(r'\b[A-Z]{4}\d{1,2}\b', texto_spo.upper());
-             if palavras: entidade_principal_str = palavras[0]; tipo_entidade_detectada = "SPO (Ticker Fallback)"; _logger.debug(f"  - #ENT via {tipo_entidade_detectada}: '{entidade_principal_str}'"); break
-             if entidade_principal_str: break
-    if entidade_principal_str: mapeamentos['#ENTIDADE'] = entidade_principal_str.replace('.', '').strip(); _logger.info(f"  - Map #ENTIDADE: '{mapeamentos['#ENTIDADE']}' ({tipo_entidade_detectada})")
-    else: _logger.error("  - FALHA CRÍTICA AO MAPEAR #ENTIDADE.")
-    valor_desejado_chave = None; texto_candidato_valor = ""; partes_relevantes_para_valor = []; entidade_lower = mapeamentos.get('#ENTIDADE', '').lower() if '#ENTIDADE' in mapeamentos else None
-    for key_spo in ["sujeito", "objeto"]:
-        for item_spo in elementos.get(key_spo, []):
-             texto_item = item_spo.lower();
-             if entidade_lower: texto_item = texto_item.replace(entidade_lower, "")
-             if data:
-                 texto_item = texto_item.replace(data, "")
-                 try: data_obj = datetime.strptime(data, "%Y-%m-%d"); texto_item = texto_item.replace(data_obj.strftime("%d/%m/%Y"), ""); texto_item = texto_item.replace(data_obj.strftime("%d-%m-%Y"), "")
-                 except ValueError: pass
-             texto_item = re.sub(r"^\s*(o|a|os|as|um|uma|uns|umas|da|de|do|das|dos|na|no|nas|nos|em|para|pelo|pela|pelos|pelas)\b", "", texto_item, flags=re.IGNORECASE).strip()
-             texto_item = re.sub(r"\b(da|de|do|das|dos|na|no|nas|nos|em)\s*$", "", texto_item, flags=re.IGNORECASE).strip()
-             texto_item = re.sub(r'\s+', ' ', texto_item).strip()
-             if texto_item and len(texto_item) > 2: partes_relevantes_para_valor.append(texto_item)
-    if partes_relevantes_para_valor:
-        texto_candidato_valor = max(partes_relevantes_para_valor, key=len); _logger.debug(f"  - Texto candidato #VALOR_DESEJADO: '{texto_candidato_valor}'")
-        valor_desejado_chave = encontrar_termo_dicionario(texto_candidato_valor, dicionario_sinonimos, limiar=0.75) # Chama a função corrigida
-    else: _logger.debug("  - Nenhum candidato (SPO limpo) para #VALOR_DESEJADO.")
-    if valor_desejado_chave: mapeamentos['#VALOR_DESEJADO'] = valor_desejado_chave; _logger.info(f"  - Map #VALOR_DESEJADO: '{valor_desejado_chave}' (de '{texto_candidato_valor}')")
-    else: _logger.error(f"  - FALHA CRÍTICA AO MAPEAR #VALOR_DESEJADO para '{texto_candidato_valor}'.")
-    tipo_acao_encontrado = None; texto_completo_norm = normalizar_texto(pergunta_usuario_original); _logger.debug(f"  - Texto norm para tipo ação: '{texto_completo_norm}'")
-    if re.search(r'\b(ordinarias?|on)\b', texto_completo_norm, re.IGNORECASE): tipo_acao_encontrado = "ORDINARIA"; _logger.debug("  - Map #TIPO_ACAO: ORDINARIA")
-    elif re.search(r'\b(preferenciais|preferencial|pn[a-z]?)\b', texto_completo_norm, re.IGNORECASE): tipo_acao_encontrado = "PREFERENCIAL"; _logger.debug("  - Map #TIPO_ACAO: PREFERENCIAL")
-    else: _logger.debug("  - Nenhum #TIPO_ACAO explícito.")
-    if tipo_acao_encontrado: mapeamentos['#TIPO_ACAO'] = tipo_acao_encontrado
-    setor_encontrado = None; match_setor = re.search(r'\bsetor\s+(?:de|do|da)?\s*([\w\s\-]+)', pergunta_usuario_original, re.IGNORECASE)
-    if match_setor:
-         nome_setor = match_setor.group(1).strip(); nome_setor = re.sub(r'\s+(da|de|do|das|dos)$', '', nome_setor, flags=re.IGNORECASE).strip()
-         if '#ENTIDADE' in mapeamentos: nome_setor = nome_setor.replace(mapeamentos['#ENTIDADE'].lower(), '').strip()
-         if nome_setor and len(nome_setor) > 2: setor_encontrado = nome_setor; _logger.info(f"  - Map #SETOR: '{setor_encontrado}'")
-         else: _logger.debug("  - 'setor' encontrado, mas sem nome válido.")
-    else: _logger.debug("  - Nenhum #SETOR explícito.")
-    if setor_encontrado: mapeamentos['#SETOR'] = setor_encontrado
-    _logger.info(f"Mapeamentos semânticos finais: {mapeamentos}"); return mapeamentos
+        if label in entidades_nomeadas: entidades_ner_detectadas.extend([(ent, label) for ent in entidades_nomeadas[label]])
+    for label, ents in entidades_nomeadas.items():
+        if label not in ner_order: entidades_ner_detectadas.extend([(ent, label) for ent in ents])
+    _logger.debug(f"  - Entidades NER p/ validação: {entidades_ner_detectadas}")
+    best_candidate_name = None; highest_priority_found = 99; best_score = 0.7
+    for ent_text, ent_label in entidades_ner_detectadas:
+        ent_text_upper = ent_text.upper().strip().replace('.','').replace('?','').replace('!','')
+        current_priority = ner_order.index(ent_label) if ent_label in ner_order else 90
+        _logger.debug(f"    Validando NER: '{ent_text}' (Label:{ent_label}) -> Upper: '{ent_text_upper}'")
+        if ent_text_upper in known_keys_upper:
+            if current_priority <= highest_priority_found:
+                 score = 1.0; nome_canonico_encontrado = nome_map[ent_text_upper]; best_candidate_name = ent_text
+                 tipo_entidade_detectada = f"NER {ent_label} (Match Exato Gazetteer)"; highest_priority_found = current_priority; best_score = score
+                 _logger.debug(f"    -> Match Exato Prioritário: Nome='{best_candidate_name}', Mapeado='{nome_canonico_encontrado}'")
+        ent_norm = normalize_key(ent_text)
+        if ent_norm and ent_norm in known_keys_upper:
+             if current_priority <= highest_priority_found:
+                 if best_candidate_name is None or current_priority < highest_priority_found or difflib.SequenceMatcher(None, ent_norm, ent_norm).ratio() >= best_score:
+                     score = difflib.SequenceMatcher(None, ent_norm, ent_norm).ratio()
+                     nome_canonico_encontrado = nome_map[ent_norm]; best_candidate_name = ent_text
+                     tipo_entidade_detectada = f"NER {ent_label} (Match Normalizado Gazetteer)"; highest_priority_found = current_priority; best_score = score
+                     _logger.debug(f"    -> Match Normalizado Prioritário: Nome='{best_candidate_name}' (Norm:{ent_norm}), Mapeado='{nome_canonico_encontrado}'")
+
+    if nome_canonico_encontrado:
+        mapeamentos['#ENTIDADE_NOME#'] = nome_canonico_encontrado.strip(); _logger.info(f"  - Map #ENTIDADE_NOME#: '{mapeamentos['#ENTIDADE_NOME#']}' (Tipo: {tipo_entidade_detectada}, Orig: '{best_candidate_name}')")
+    else: _logger.error("  - FALHA CRÍTICA AO MAPEAR #ENTIDADE_NOME.")
+
+    # 2. Mapear #VALOR_DESEJADO (Abordagem por Palavra-chave Simples)
+    valor_desejado_chave = None
+    pergunta_lower = pergunta_usuario_original.lower()
+    _logger.debug(f"  - Buscando keyword para #VALOR_DESEJADO em: '{pergunta_lower}'")
+    possible_vd_key = None
+    if "preço de abertura" in pergunta_lower or "preco de abertura" in pergunta_lower: possible_vd_key = "preco_abertura"
+    elif "preço de fechamento" in pergunta_lower or "preco de fechamento" in pergunta_lower: possible_vd_key = "preco_fechamento"
+    elif "preço máximo" in pergunta_lower or "preco maximo" in pergunta_lower: possible_vd_key = "preco_maximo"
+    elif "preço mínimo" in pergunta_lower or "preco minimo" in pergunta_lower: possible_vd_key = "preco_minimo"
+    elif "preço médio" in pergunta_lower or "preco medio" in pergunta_lower: possible_vd_key = "preco_medio"
+    elif "código" in pergunta_lower or "codigo" in pergunta_lower or "ticker" in pergunta_lower or "negociação" in pergunta_lower: possible_vd_key = "codigo"
+    elif "preço" in pergunta_lower or "preco" in pergunta_lower or "cotação" in pergunta_lower or "cotacao" in pergunta_lower or "valor" in pergunta_lower: possible_vd_key = "preco_fechamento" # Default
+    elif "volume total negociado" in pergunta_lower or "volume negociado" in pergunta_lower: possible_vd_key = "volume_total_negociado"
+    elif "volume" in pergunta_lower: possible_vd_key = "volume_total_negociado"
+    elif "quantidade" in pergunta_lower and ("negociada" in pergunta_lower or "papeis" in pergunta_lower or "acoes" in pergunta_lower): possible_vd_key = "quantidade_negociada"
+    elif "total de negocios" in pergunta_lower or "numero de negocios" in pergunta_lower: possible_vd_key = "total_negocios"
+    # Adicione outros elifs para indicadores (use as chaves do resultado_similaridade.txt)
+    # elif "p/l" in pergunta_lower or "pl" in pergunta_lower: possible_vd_key = "pl"
+    # elif "dividend yield" in pergunta_lower or "dy" in pergunta_lower: possible_vd_key = "dy"
+
+    if possible_vd_key:
+        _logger.debug(f"  - Keyword encontrada indica chave: '{possible_vd_key}'")
+        if possible_vd_key in dicionario_sinonimos: # Verifica se chave existe no dicionário de sinônimos
+             valor_desejado_chave = possible_vd_key
+             _logger.info(f"  - Map #VALOR_DESEJADO (Keyword): '{valor_desejado_chave}'")
+        else: _logger.error(f"  - Chave '{possible_vd_key}' não existe em resultado_similaridade.txt!")
+    else: _logger.warning("  - Nenhuma keyword para #VALOR_DESEJADO encontrada.") # Aviso, pode ser ok para alguns templates
+
+    # Mapeamento final de VD (só adiciona se encontrou e validou)
+    if valor_desejado_chave: mapeamentos['#VALOR_DESEJADO'] = valor_desejado_chave
+    else: _logger.error("  - FALHA CRÍTICA AO MAPEAR #VALOR_DESEJADO.") # Erro se não encontrou
+
+    # ... (Mapear Tipo Ação e Setor, igual antes) ...
+
+    _logger.info(f"Mapeamentos finais: {mapeamentos}"); return mapeamentos
+# --- FIM FUNÇÃO MAPEAMENTO ---
 
 # --- Bloco Principal de Execução ---
 if __name__ == "__main__":
     _logger.info(f"--- ================================= ---")
-    _logger.info(f"--- Iniciando processamento PLN Script (PID: {os.getpid()}) ---")
-    _logger.info(f"--- Argumentos Recebidos: {sys.argv} ---")
-    _logger.info(f"--- Diretório Atual (CWD): {os.getcwd()} ---")
-    _logger.info(f"--- Python Executable: {sys.executable} ---")
-
-    if len(sys.argv) > 1: pergunta_usuario = " ".join(sys.argv[1:]); _logger.info(f"Pergunta recebida: '{pergunta_usuario}'")
+    _logger.info(f"--- Iniciando PLN Script (PID: {os.getpid()}) ---")
+    if len(sys.argv) > 1: pergunta_usuario = " ".join(sys.argv[1:]); _logger.info(f"Pergunta: '{pergunta_usuario}'")
     else: fail_with_json_error("Nenhuma pergunta fornecida.")
-
-    _logger.info("Carregando configs..."); templates_linhas_interesse = carregar_arquivo_linhas(CAMINHO_PERGUNTAS_INTERESSE); dicionario_sinonimos = carregar_dicionario_sinonimos(CAMINHO_DICIONARIO_SINONIMOS); _logger.info("Configs carregadas.")
-
+    _logger.info("Configs carregadas.")
     _logger.info("Processando NLP...");
     try: elementos_nlp, entidades_nomeadas_nlp = extrair_entidades_spacy(pergunta_usuario); data_extraida_nlp = extrair_data(pergunta_usuario); _logger.info("NLP concluído.")
-    except Exception as e_nlp: fail_with_json_error("Erro no processamento NLP.", e_nlp)
-
-    _logger.info("Buscando template..."); template_nome, similaridade, linha_original_template = encontrar_pergunta_similar(pergunta_usuario, templates_linhas_interesse, limiar=0.65)
-    if not template_nome: fail_with_json_error("Pergunta não compreendida.", details=f"Similaridade max: {similaridade:.2f}")
+    except Exception as e_nlp: fail_with_json_error("Erro NLP.", e_nlp)
+    _logger.info("Buscando template...");
+    templates_linhas_interesse = carregar_arquivo_linhas(CAMINHO_PERGUNTAS_INTERESSE)
+    template_nome, similaridade, _ = encontrar_pergunta_similar(pergunta_usuario, templates_linhas_interesse, limiar=0.65)
+    if not template_nome: fail_with_json_error("Pergunta não compreendida (template).", details=f"Sim max: {similaridade:.2f}")
     _logger.info(f"Template '{template_nome}' selecionado (Sim: {similaridade:.4f}).")
-
-    _logger.info("Mapeando placeholders semânticos...");
-    try: mapeamentos_semanticos = mapear_para_placeholders(pergunta_usuario, elementos_nlp, entidades_nomeadas_nlp, data_extraida_nlp, dicionario_sinonimos); _logger.info("Mapeamento concluído.")
-    except Exception as e_map: fail_with_json_error("Erro no mapeamento semântico.", e_map) # Erro acontece aqui se UnboundLocal ocorrer
-
-    _logger.info("Validando placeholders..."); placeholders_requeridos_por_template = {
-        "Template 1A": {"#ENTIDADE", "#DATA", "#VALOR_DESEJADO"}, "Template 1B": {"#ENTIDADE", "#DATA", "#VALOR_DESEJADO"},
-        "Template 2A": {"#ENTIDADE", "#VALOR_DESEJADO"}, "Template 3A": {"#SETOR", "#VALOR_DESEJADO"},
-        "Template 4A": {"#SETOR", "#DATA", "#VALOR_DESEJADO"},   "Template 4B": {"#ENTIDADE", "#DATA", "#VALOR_DESEJADO"},
-        "Template 5A": {"#ENTIDADE", "#DATA", "#VALOR_DESEJADO"}, "Template 5B": {"#ENTIDADE", "#DATA", "#VALOR_DESEJADO"},
-        "Template 5C": {"#ENTIDADE", "#DATA", "#VALOR_DESEJADO"},
-    }; placeholders_requeridos = placeholders_requeridos_por_template.get(template_nome, set()); placeholders_encontrados = set(mapeamentos_semanticos.keys()); placeholders_faltando = placeholders_requeridos - placeholders_encontrados
+    _logger.info("Mapeando placeholders...");
+    dicionario_sinonimos = carregar_dicionario_sinonimos(CAMINHO_DICIONARIO_SINONIMOS)
+    try: mapeamentos_semanticos = mapear_para_placeholders(pergunta_usuario, elementos_nlp, entidades_nomeadas_nlp, data_extraida_nlp, dicionario_sinonimos, empresa_nome_map) # Passa mapa nomes
+    except Exception as e_map: fail_with_json_error("Erro inesperado mapeamento.", e_map)
+    _logger.info("Mapeamento concluído.")
+    _logger.info("Validando placeholders...");
+    placeholders_requeridos_por_template = {
+        "Template 1A": {"#ENTIDADE_NOME#", "#DATA", "#VALOR_DESEJADO"}, "Template 1B": {"#ENTIDADE_NOME#", "#DATA", "#VALOR_DESEJADO"},
+        "Template 2A": {"#ENTIDADE_NOME#", "#VALOR_DESEJADO"}, "Template 3A": {"#SETOR", "#VALOR_DESEJADO"},
+    };
+    placeholders_requeridos = placeholders_requeridos_por_template.get(template_nome, set())
+    placeholders_encontrados = set(mapeamentos_semanticos.keys())
+    placeholders_faltando = placeholders_requeridos - placeholders_encontrados
     if placeholders_faltando:
-         _logger.warning(f"VALIDAÇÃO: '{template_nome}' - Faltando: {sorted(list(placeholders_faltando))}")
-         if "#VALOR_DESEJADO" in placeholders_faltando: _logger.error("### VALIDAÇÃO FALHOU: #VALOR_DESEJADO não mapeado! ###")
-         if "#ENTIDADE" in placeholders_faltando: _logger.error("### VALIDAÇÃO FALHOU: #ENTIDADE não mapeada! ###")
-    else: _logger.info(f"Validação OK para '{template_nome}'.")
-
-    _logger.info("Construindo JSON de resposta..."); resposta_final_stdout = {
-        "template_nome": template_nome, "mapeamentos": mapeamentos_semanticos,
-        "_debug_info": { "pergunta_original": pergunta_usuario, "elementos_extraidos_nlp": elementos_nlp, "entidades_nomeadas_nlp": entidades_nomeadas_nlp, "data_extraida_nlp": data_extraida_nlp, "similaridade_template": round(similaridade, 4) if similaridade else 0.0, "linha_template_correspondente": linha_original_template, "placeholders_requeridos_verificados": sorted(list(placeholders_requeridos)), "placeholders_faltando_verificados": sorted(list(placeholders_faltando)) }
-    }; json_output_string = None
-    try: json_output_string = json.dumps(resposta_final_stdout, ensure_ascii=False, indent=None); _logger.debug(f"JSON final para stdout: {json_output_string}")
-    except Exception as e_json_final: fail_with_json_error("Erro ao gerar JSON final.", e_json_final)
-
+         _logger.error(f"VALIDAÇÃO FALHOU '{template_nome}': Faltando OBRIGATÓRIOS: {sorted(list(placeholders_faltando))}")
+         fail_with_json_error(f"Não foi possível extrair: {', '.join(sorted(list(placeholders_faltando)))}.", status_code=1)
+    else: _logger.info(f"Validação OK '{template_nome}'.")
+    _logger.info("Construindo JSON de resposta...");
+    debug_info = { "pergunta_original": pergunta_usuario, "elementos_extraidos_nlp": elementos_nlp, "entidades_nomeadas_nlp": entidades_nomeadas_nlp, "data_extraida_nlp": data_extraida_nlp, "similaridade_template": round(similaridade, 4), "template_requeridos": sorted(list(placeholders_requeridos)) }
+    resposta_final_stdout = { "template_nome": template_nome, "mapeamentos": mapeamentos_semanticos, "_debug_info": debug_info };
+    try: json_output_string = json.dumps(resposta_final_stdout, ensure_ascii=False, indent=None); _logger.debug(f"JSON final: {json_output_string}")
+    except Exception as e_json_final: fail_with_json_error("Erro gerar JSON final.", e_json_final)
     _logger.info("Enviando resposta para stdout...");
     try: print(json_output_string); sys.stdout.flush()
-    except Exception as e_print: _logger.critical(f"Erro CRÍTICO ao imprimir para stdout: {e_print}", exc_info=True); print(f"ERRO PRINT STDOUT. JSON (stderr):\n{json_output_string}", file=sys.stderr); sys.exit(1)
-
+    except Exception as e_print: _logger.critical(f"Erro CRÍTICO print stdout: {e_print}", exc_info=True); print(f'{{"erro": "Erro critico print.", "detalhes": "{str(e_print)[:100]}..."}}', file=sys.stderr); sys.exit(1)
     _logger.info(f"--- Processamento PLN Script concluído com sucesso ---"); sys.exit(0)
