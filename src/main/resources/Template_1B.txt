@@ -1,14 +1,21 @@
-# Template Gerado para: Template 1B
-# Objetivo: Buscar preço de abertura de uma entidade em uma data.
+# Template_1B.txt (Final Corrected Version - 2025-04-23)
+# Busca Preço de Abertura por Ticker e Data
+SELECT DISTINCT ?precoAbertura
+WHERE {
+  # Navega da empresa para a instância de negociação específica
+  ?empresa <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#temValorMobiliarioNegociado> ?valor_mobiliario  .
+  ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#representadoPor> ?codigo .
+  ?codigo <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#ticker> ?ticker_literal . # Obtém o ticker literal
+  ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociado> ?negociado .
+  ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociadoDurante> ?pregao .
 
-SELECT DISTINCT ?empresa ?valor_mobiliario ?negociado ?pregao ?codigo ?precoAbertura 
- WHERE {
-    ?empresa <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#temValorMobiliarioNegociado> ?valor_mobiliario  .
-    ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociado> ?negociado .
-    ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#representadoPor> ?codigo .
-    ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#precoAbertura> ?precoAbertura .
-    ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociadoDurante> ?pregao .
-    ?pregao <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#ocorreEmData> #DATA# . 
-    FILTER (?empresa = #ENTIDADE#) .
+  # Obtém o preço de abertura
+  ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#precoAbertura> ?precoAbertura . # Propriedade alterada
+
+  # Filtra pela data exata (Java substitui #DATA# por "YYYY-MM-DD"^^xsd:date)
+  ?pregao <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#ocorreEmData> #DATA# .
+
+  # Filtra pelo ticker (Java substitui #ENTIDADE_NOME# por "TICKER_OU_LISTA")
+  FILTER CONTAINS(lcase(#ENTIDADE_NOME#), lcase(str(?ticker_literal))) .
 }
-
+LIMIT 10 # Boa prática

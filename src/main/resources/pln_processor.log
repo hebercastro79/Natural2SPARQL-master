@@ -463,3 +463,252 @@ OSError: [Errno 22] Invalid argument
 2025-04-06 12:27:22,522 - PLN_Processor - DEBUG - JSON final para stdout: {"template_nome": "Template 1B", "mapeamentos": {"#DATA": "2023-05-08", "#ENTIDADE": "CBAV3", "#VALOR_DESEJADO": "precoabertura"}, "_debug_info": {"pergunta_original": "Qual foi o preço de abertura da CBAV3 em 08/05/2023?", "elementos_extraidos_nlp": {"sujeito": ["o preço de abertura da CBAV3 em 08/05/2023"], "predicado": [], "objeto": []}, "entidades_nomeadas_nlp": {"ORG": ["CBAV3"]}, "data_extraida_nlp": "2023-05-08", "similaridade_template": 1.0, "linha_template_correspondente": "Template 1B - Qual foi o preço de abertura da CBAV3 em 08/05/2023?", "placeholders_requeridos_verificados": ["#ENTIDADE", "#DATA", "#VALOR_DESEJADO"], "placeholders_faltando_verificados": []}}
 2025-04-06 12:27:22,523 - PLN_Processor - INFO - --- Processamento PLN concluído com sucesso ---
 >>>>>>> 90d16c9ebcd9eb1db631c342467b8c9f371c2b93
+2025-05-02 16:48:24,804 - PLN_Processor - INFO - --- LOG INICIADO: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\pln_processor.log ---
+2025-05-02 16:48:24,806 - PLN_Processor - INFO - Carregando spaCy...
+2025-05-02 16:48:27,099 - PLN_Processor - INFO - spaCy carregado.
+2025-05-02 16:48:27,100 - PLN_Processor - INFO - Dir script: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources
+2025-05-02 16:48:27,102 - PLN_Processor - INFO - Dic sinonimos: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\resultado_similaridade.txt
+2025-05-02 16:48:27,104 - PLN_Processor - INFO - Perguntas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\perguntas_de_interesse.txt
+2025-05-02 16:48:27,105 - PLN_Processor - INFO - Mapa JSON: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\empresa_nome_map.json
+2025-05-02 16:48:27,106 - PLN_Processor - ERROR - Finalizando c/ erro (status 1): Erro carregar mapa.
+Traceback (most recent call last):
+  File "C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\pln_processor.py", line 60, in <module>
+    if fallback_path.is_file(): map_path_to_load = fallback_path
+       ^^^^^^^^^^^^^
+NameError: name 'fallback_path' is not defined
+2025-05-04 13:28:08,130 - PLN_Processor - INFO - --- LOG INICIADO: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\pln_processor.log ---
+2025-05-04 13:28:08,131 - PLN_Processor - INFO - Carregando spaCy...
+2025-05-04 13:28:10,415 - PLN_Processor - INFO - spaCy carregado.
+2025-05-04 13:28:10,415 - PLN_Processor - INFO - Dir script: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources
+2025-05-04 13:28:10,417 - PLN_Processor - INFO - Dic sinonimos: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\resultado_similaridade.txt
+2025-05-04 13:28:10,420 - PLN_Processor - INFO - Perguntas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\perguntas_de_interesse.txt
+2025-05-04 13:28:10,421 - PLN_Processor - INFO - Mapa JSON: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\empresa_nome_map.json
+2025-05-04 13:28:10,422 - PLN_Processor - ERROR - Finalizando c/ erro (status 1): Erro carregar mapa.
+Traceback (most recent call last):
+  File "C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\pln_processor.py", line 60, in <module>
+    if fallback_path.is_file(): map_path_to_load = fallback_path
+       ^^^^^^^^^^^^^
+NameError: name 'fallback_path' is not defined
+2025-05-04 13:30:24,129 - PLN_Processor - INFO - --- LOG INICIADO: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\pln_processor.log ---
+2025-05-04 13:30:24,130 - PLN_Processor - INFO - Carregando spaCy...
+2025-05-04 13:30:26,082 - PLN_Processor - INFO - spaCy carregado.
+2025-05-04 13:30:26,083 - PLN_Processor - INFO - Dir script: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources
+2025-05-04 13:30:26,083 - PLN_Processor - INFO - Dic sinonimos: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\resultado_similaridade.txt
+2025-05-04 13:30:26,083 - PLN_Processor - INFO - Perguntas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\perguntas_de_interesse.txt
+2025-05-04 13:30:26,083 - PLN_Processor - INFO - Mapa JSON: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\empresa_nome_map.json
+2025-05-04 13:30:26,084 - PLN_Processor - ERROR - Finalizando c/ erro (status 1): Erro carregar mapa.
+Traceback (most recent call last):
+  File "C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\pln_processor.py", line 60, in <module>
+    if fallback_path.is_file(): map_path_to_load = fallback_path
+       ^^^^^^^^^^^^^
+NameError: name 'fallback_path' is not defined
+2025-05-04 13:44:44,109 - PLN_Processor - INFO - --- LOG INICIADO: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\pln_processor.log ---
+2025-05-04 13:44:44,109 - PLN_Processor - INFO - Carregando spaCy...
+2025-05-04 13:44:45,793 - PLN_Processor - INFO - spaCy carregado.
+2025-05-04 13:44:45,794 - PLN_Processor - INFO - Dir script: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources
+2025-05-04 13:44:45,796 - PLN_Processor - INFO - Dic sinonimos: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\resultado_similaridade.txt
+2025-05-04 13:44:45,798 - PLN_Processor - INFO - Perguntas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\perguntas_de_interesse.txt
+2025-05-04 13:44:45,799 - PLN_Processor - INFO - Mapa JSON: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\empresa_nome_map.json
+2025-05-04 13:44:45,800 - PLN_Processor - INFO - Abrindo mapa JSON de: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\empresa_nome_map.json
+2025-05-04 13:44:45,823 - PLN_Processor - INFO - Carregados 726 mapeamentos JSON.
+2025-05-04 13:44:45,824 - PLN_Processor - DEBUG -  Exemplo: ('3RPETROLEUM', 'RRRP3')
+2025-05-04 13:44:45,824 - PLN_Processor - INFO - --- ================================= ---
+2025-05-04 13:44:45,824 - PLN_Processor - INFO - --- INICIANDO PLN_PROCESSOR.PY (PID: 12008) ---
+2025-05-04 13:44:45,825 - PLN_Processor - INFO - --- Args: ['C:\\Users\\MENICIO JR\\Desktop\\Natural2SPARQL-master\\src\\main\\resources\\pln_processor.py', 'teste'] ---
+2025-05-04 13:44:45,827 - PLN_Processor - INFO - --- CWD: C:\Users\MENICIO JR ---
+2025-05-04 13:44:45,827 - PLN_Processor - INFO - --- Script Dir: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources ---
+2025-05-04 13:44:45,828 - PLN_Processor - INFO - Pergunta: 'teste'
+2025-05-04 13:44:45,830 - PLN_Processor - INFO - Passo 1: NLP...
+2025-05-04 13:44:45,831 - PLN_Processor - DEBUG - spaCy para: 'teste...'
+2025-05-04 13:44:45,861 - PLN_Processor - DEBUG -   NER (spaCy):
+2025-05-04 13:44:45,861 - PLN_Processor - DEBUG -   NER (final): {}
+2025-05-04 13:44:45,861 - PLN_Processor - DEBUG -   SPO (simplif.):
+2025-05-04 13:44:45,861 - PLN_Processor - DEBUG -     -> Pred: testir
+2025-05-04 13:44:45,861 - PLN_Processor - INFO - spaCy OK. SPO: {'sujeito': [], 'predicado': ['testir'], 'objeto': []}, NER: {}
+2025-05-04 13:44:45,862 - PLN_Processor - DEBUG - Extraindo data de: 'teste'
+2025-05-04 13:44:45,863 - PLN_Processor - INFO - Nenhuma data encontrada no texto.
+2025-05-04 13:44:45,864 - PLN_Processor - INFO - NLP OK.
+2025-05-04 13:44:45,866 - PLN_Processor - INFO - Passo 2: Template...
+2025-05-04 13:44:45,868 - PLN_Processor - DEBUG - Carregando linhas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\perguntas_de_interesse.txt
+2025-05-04 13:44:45,887 - PLN_Processor - INFO - 'perguntas_de_interesse.txt' lido com utf-8.
+2025-05-04 13:44:45,887 - PLN_Processor - DEBUG - Buscando template p/ 'teste' (Lim 0.65) em 18 linhas...
+2025-05-04 13:44:45,889 - PLN_Processor - DEBUG -  -> 'Template 1A' ('qual foi o preco de fechamento da acao da csn em 08052023'): Sim=0.0645
+2025-05-04 13:44:45,889 - PLN_Processor - DEBUG -    --> Melhor: 'Template 1A', 0.0645
+2025-05-04 13:44:45,889 - PLN_Processor - DEBUG -  -> 'Template 1B' ('qual foi o preco de abertura da cbav3 em 08052023'): Sim=0.0741
+2025-05-04 13:44:45,890 - PLN_Processor - DEBUG -    --> Melhor: 'Template 1B', 0.0741
+2025-05-04 13:44:45,890 - PLN_Processor - DEBUG -  -> 'Template 2A' ('qual o codigo de negociacao da acao da gerdau'): Sim=0.0800
+2025-05-04 13:44:45,890 - PLN_Processor - DEBUG -    --> Melhor: 'Template 2A', 0.0800
+2025-05-04 13:44:45,891 - PLN_Processor - DEBUG -  -> 'Template 3A' ('quais sao as acoes do setor eletrico'): Sim=0.1951
+2025-05-04 13:44:45,891 - PLN_Processor - DEBUG -    --> Melhor: 'Template 3A', 0.1951
+2025-05-04 13:44:45,891 - PLN_Processor - DEBUG -  -> 'Template 4A' ('qual foi o volume negociado nas acoes do setor bancario em 05052023'): Sim=0.1111
+2025-05-04 13:44:45,891 - PLN_Processor - DEBUG -  -> 'Template 4B' ('qual foi a quantidade de acoes do itau negociadas no pregao de 05052023'): Sim=0.1316
+2025-05-04 13:44:45,892 - PLN_Processor - DEBUG -  -> 'Template 5A' ('qual foi o preco minimo da acao da vale em 08052023'): Sim=0.0714
+2025-05-04 13:44:45,892 - PLN_Processor - DEBUG -  -> 'Template 5B' ('qual foi o preco minima da acao preferencial do itau em 05052023'): Sim=0.0580
+2025-05-04 13:44:45,892 - PLN_Processor - DEBUG -  -> 'Template 5C' ('qual foi o preco maximo da acao ordinaria da gerdau em 08052023'): Sim=0.0588
+2025-05-04 13:44:45,893 - PLN_Processor - DEBUG -  -> 'Template 6A' ('qual foi a variacao intradiaria absoluta da acao da csn no pregao de 08052023'): Sim=0.0732
+2025-05-04 13:44:45,893 - PLN_Processor - DEBUG -  -> 'Template 7A' ('qual acao do setor de mineracao que teve a maior alta percentual no pregao do dia 08052023'): Sim=0.0842
+2025-05-04 13:44:45,894 - PLN_Processor - DEBUG -  -> 'Template 7B' ('qual acao do setor de bancario que teve a baixa percentual no pregao do dia 08052023'): Sim=0.0899
+2025-05-04 13:44:45,894 - PLN_Processor - DEBUG -  -> 'Template 7C' ('qual acao do setor de consumo nao ciclico que a menor variacao no dia 08052023'): Sim=0.0964
+2025-05-04 13:44:45,894 - PLN_Processor - DEBUG -  -> 'Template 7D' ('qual a acao com o maior percentual de alta no pregao de 08052023'): Sim=0.1159
+2025-05-04 13:44:45,895 - PLN_Processor - DEBUG -  -> 'Template 7E' ('quais as cinco acoes de maior percentual de alta no pregao de 08052023'): Sim=0.1067
+2025-05-04 13:44:45,895 - PLN_Processor - DEBUG -  -> 'Template 7F' ('quais as cinco acoes de maior percentual de baixa no pregao de 08052023'): Sim=0.1053
+2025-05-04 13:44:45,895 - PLN_Processor - DEBUG -  -> 'Template 8A' ('qual foi a variacao intradiaria absoluta da acao do ibovespa com o maior percentual de alta no pregao de 08052023'): Sim=0.0847
+2025-05-04 13:44:45,896 - PLN_Processor - DEBUG -  -> 'Template 8B' ('qual foi o intervalo intradiario percentual da acao com o maior percentual de baixa entre as acoes do imat no pregao de 08052023'): Sim=0.0752
+2025-05-04 13:44:45,896 - PLN_Processor - WARNING - Sim max (0.20) < limiar (0.65).
+2025-05-04 13:44:45,896 - PLN_Processor - ERROR - Finalizando c/ erro (status 1): Pergunta não compreendida (template).
+2025-05-04 13:44:45,897 - PLN_Processor - ERROR -   Detalhes: Sim max: 0.20
+2025-05-04 13:46:14,366 - PLN_Processor - INFO - --- LOG INICIADO: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\pln_processor.log ---
+2025-05-04 13:46:14,366 - PLN_Processor - INFO - Carregando spaCy...
+2025-05-04 13:46:16,049 - PLN_Processor - INFO - spaCy carregado.
+2025-05-04 13:46:16,050 - PLN_Processor - INFO - Dir script: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources
+2025-05-04 13:46:16,050 - PLN_Processor - INFO - Dic sinonimos: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\resultado_similaridade.txt
+2025-05-04 13:46:16,050 - PLN_Processor - INFO - Perguntas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\perguntas_de_interesse.txt
+2025-05-04 13:46:16,050 - PLN_Processor - INFO - Mapa JSON: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\empresa_nome_map.json
+2025-05-04 13:46:16,051 - PLN_Processor - INFO - Abrindo mapa JSON de: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\empresa_nome_map.json
+2025-05-04 13:46:16,053 - PLN_Processor - INFO - Carregados 726 mapeamentos JSON.
+2025-05-04 13:46:16,053 - PLN_Processor - DEBUG -  Exemplo: ('3RPETROLEUM', 'RRRP3')
+2025-05-04 13:46:16,053 - PLN_Processor - INFO - --- ================================= ---
+2025-05-04 13:46:16,053 - PLN_Processor - INFO - --- INICIANDO PLN_PROCESSOR.PY (PID: 6536) ---
+2025-05-04 13:46:16,053 - PLN_Processor - INFO - --- Args: ['C:\\Users\\MENICIO JR\\Desktop\\Natural2SPARQL-master\\src\\main\\resources\\pln_processor.py', 'Qual foi o preço de abertura da CBAV3 em 08/05/2023?'] ---
+2025-05-04 13:46:16,054 - PLN_Processor - INFO - --- CWD: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master ---
+2025-05-04 13:46:16,054 - PLN_Processor - INFO - --- Script Dir: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources ---
+2025-05-04 13:46:16,055 - PLN_Processor - INFO - Pergunta: 'Qual foi o preço de abertura da CBAV3 em 08/05/2023?'
+2025-05-04 13:46:16,055 - PLN_Processor - INFO - Passo 1: NLP...
+2025-05-04 13:46:16,055 - PLN_Processor - DEBUG - spaCy para: 'Qual foi o preço de abertura da CBAV3 em 08/05/2023?...'
+2025-05-04 13:46:16,072 - PLN_Processor - DEBUG -   NER (spaCy):
+2025-05-04 13:46:16,073 - PLN_Processor - DEBUG -     - 'CBAV3' (ORG)
+2025-05-04 13:46:16,073 - PLN_Processor - DEBUG -   NER (final): {'ORG': ['CBAV3']}
+2025-05-04 13:46:16,073 - PLN_Processor - DEBUG -   SPO (simplif.):
+2025-05-04 13:46:16,073 - PLN_Processor - INFO - spaCy OK. SPO: {'sujeito': [], 'predicado': [], 'objeto': []}, NER: {'ORG': ['CBAV3']}
+2025-05-04 13:46:16,073 - PLN_Processor - DEBUG - Extraindo data de: 'Qual foi o preço de abertura da CBAV3 em 08/05/2023?'
+2025-05-04 13:46:16,075 - PLN_Processor - INFO - Data explícita encontrada: '08/05/2023' -> 2023-05-08
+2025-05-04 13:46:16,075 - PLN_Processor - INFO - NLP OK.
+2025-05-04 13:46:16,075 - PLN_Processor - INFO - Passo 2: Template...
+2025-05-04 13:46:16,076 - PLN_Processor - DEBUG - Carregando linhas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\perguntas_de_interesse.txt
+2025-05-04 13:46:16,077 - PLN_Processor - INFO - 'perguntas_de_interesse.txt' lido com utf-8.
+2025-05-04 13:46:16,078 - PLN_Processor - DEBUG - Buscando template p/ 'qual foi o preco de abertura da cbav3 em 08052023' (Lim 0.65) em 18 linhas...
+2025-05-04 13:46:16,079 - PLN_Processor - DEBUG -  -> 'Template 1A' ('qual foi o preco de fechamento da acao da csn em 08052023'): Sim=0.7736
+2025-05-04 13:46:16,080 - PLN_Processor - DEBUG -    --> Melhor: 'Template 1A', 0.7736
+2025-05-04 13:46:16,080 - PLN_Processor - DEBUG -  -> 'Template 1B' ('qual foi o preco de abertura da cbav3 em 08052023'): Sim=1.0000
+2025-05-04 13:46:16,080 - PLN_Processor - DEBUG -    --> Melhor: 'Template 1B', 1.0000
+2025-05-04 13:46:16,082 - PLN_Processor - DEBUG -  -> 'Template 2A' ('qual o codigo de negociacao da acao da gerdau'): Sim=0.4894
+2025-05-04 13:46:16,083 - PLN_Processor - DEBUG -  -> 'Template 3A' ('quais sao as acoes do setor eletrico'): Sim=0.3294
+2025-05-04 13:46:16,084 - PLN_Processor - DEBUG -  -> 'Template 4A' ('qual foi o volume negociado nas acoes do setor bancario em 05052023'): Sim=0.5345
+2025-05-04 13:46:16,086 - PLN_Processor - DEBUG -  -> 'Template 4B' ('qual foi a quantidade de acoes do itau negociadas no pregao de 05052023'): Sim=0.4333
+2025-05-04 13:46:16,087 - PLN_Processor - DEBUG -  -> 'Template 5A' ('qual foi o preco minimo da acao da vale em 08052023'): Sim=0.7200
+2025-05-04 13:46:16,087 - PLN_Processor - DEBUG -  -> 'Template 5B' ('qual foi o preco minima da acao preferencial do itau em 05052023'): Sim=0.6195
+2025-05-04 13:46:16,088 - PLN_Processor - DEBUG -  -> 'Template 5C' ('qual foi o preco maximo da acao ordinaria da gerdau em 08052023'): Sim=0.7143
+2025-05-04 13:46:16,089 - PLN_Processor - DEBUG -  -> 'Template 6A' ('qual foi a variacao intradiaria absoluta da acao da csn no pregao de 08052023'): Sim=0.4286
+2025-05-04 13:46:16,090 - PLN_Processor - DEBUG -  -> 'Template 7A' ('qual acao do setor de mineracao que teve a maior alta percentual no pregao do dia 08052023'): Sim=0.4029
+2025-05-04 13:46:16,091 - PLN_Processor - DEBUG -  -> 'Template 7B' ('qual acao do setor de bancario que teve a baixa percentual no pregao do dia 08052023'): Sim=0.4211
+2025-05-04 13:46:16,092 - PLN_Processor - DEBUG -  -> 'Template 7C' ('qual acao do setor de consumo nao ciclico que a menor variacao no dia 08052023'): Sim=0.4252
+2025-05-04 13:46:16,093 - PLN_Processor - DEBUG -  -> 'Template 7D' ('qual a acao com o maior percentual de alta no pregao de 08052023'): Sim=0.4602
+2025-05-04 13:46:16,093 - PLN_Processor - DEBUG -  -> 'Template 7E' ('quais as cinco acoes de maior percentual de alta no pregao de 08052023'): Sim=0.4034
+2025-05-04 13:46:16,094 - PLN_Processor - DEBUG -  -> 'Template 7F' ('quais as cinco acoes de maior percentual de baixa no pregao de 08052023'): Sim=0.4167
+2025-05-04 13:46:16,095 - PLN_Processor - DEBUG -  -> 'Template 8A' ('qual foi a variacao intradiaria absoluta da acao do ibovespa com o maior percentual de alta no pregao de 08052023'): Sim=0.3333
+2025-05-04 13:46:16,096 - PLN_Processor - DEBUG -  -> 'Template 8B' ('qual foi o intervalo intradiario percentual da acao com o maior percentual de baixa entre as acoes do imat no pregao de 08052023'): Sim=0.3051
+2025-05-04 13:46:16,096 - PLN_Processor - INFO - Template selecionado: 'Template 1B', Sim=1.0000
+2025-05-04 13:46:16,096 - PLN_Processor - DEBUG -  Linha: 'Template 1B - Qual foi o preço de abertura da CBAV3 em 08/05/2023?'
+2025-05-04 13:46:16,097 - PLN_Processor - INFO - Template: 'Template 1B' (Sim: 1.0000).
+2025-05-04 13:46:16,097 - PLN_Processor - INFO - Passo 3: Mapeamento...
+2025-05-04 13:46:16,098 - PLN_Processor - DEBUG - Carregando linhas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\resultado_similaridade.txt
+2025-05-04 13:46:16,114 - PLN_Processor - INFO - 'resultado_similaridade.txt' lido com utf-8.
+2025-05-04 13:46:16,114 - PLN_Processor - INFO - Processando dicionário 'resultado_similaridade.txt' (40 linhas)...
+2025-05-04 13:46:16,116 - PLN_Processor - INFO - Dicionário 'resultado_similaridade.txt' carregado: 21 chaves.
+2025-05-04 13:46:16,116 - PLN_Processor - DEBUG - Mapeando placeholders...
+2025-05-04 13:46:16,117 - PLN_Processor - DEBUG -   - Map #DATA#: '2023-05-08'
+2025-05-04 13:46:16,117 - PLN_Processor - DEBUG -   - Entidades NER p/ busca: [('CBAV3', 'ORG')]
+2025-05-04 13:46:16,118 - PLN_Processor - DEBUG -     Validando NER: 'CBAV3' (ORG) -> Up: 'CBAV3', Norm: 'CBAV3'
+2025-05-04 13:46:16,118 - PLN_Processor - DEBUG -     --> MATCH EXATO! Canônico='CBAV3'
+2025-05-04 13:46:16,118 - PLN_Processor - INFO -   - Map #ENTIDADE_NOME#: 'CBAV3' (Origem: 'CBAV3', Tipo: NER ORG (Match Exato))
+2025-05-04 13:46:16,119 - PLN_Processor - DEBUG -   - Buscando keyword #VALOR_DESEJADO# em: 'qual foi o preço de abertura da cbav3 em 08/05/2023?'
+2025-05-04 13:46:16,119 - PLN_Processor - DEBUG -   - Keyword ('preço de abertura') -> chave: 'preco_abertura'
+2025-05-04 13:46:16,119 - PLN_Processor - INFO -   - Map #VALOR_DESEJADO#: 'preco_abertura' (Validado)
+2025-05-04 13:46:16,119 - PLN_Processor - INFO - Mapeamentos finais: {'#DATA#': '2023-05-08', '#ENTIDADE_NOME#': 'CBAV3', '#VALOR_DESEJADO#': 'preco_abertura'}
+2025-05-04 13:46:16,119 - PLN_Processor - INFO - Mapeamento OK.
+2025-05-04 13:46:16,119 - PLN_Processor - INFO - Passo 4: Validando placeholders...
+2025-05-04 13:46:16,120 - PLN_Processor - DEBUG -   >> DEBUG VAL: Tpl=Template 1B, Req={'#ENTIDADE_NOME#', '#DATA#', '#VALOR_DESEJADO'}, Enc=['#DATA#', '#ENTIDADE_NOME#', '#VALOR_DESEJADO#']
+2025-05-04 13:46:16,120 - PLN_Processor - DEBUG -     --> Encontrado: '#ENTIDADE_NOME#'
+2025-05-04 13:46:16,120 - PLN_Processor - DEBUG -     --> Encontrado: '#DATA#'
+2025-05-04 13:46:16,120 - PLN_Processor - DEBUG -     --> Faltando: '#VALOR_DESEJADO'
+2025-05-04 13:46:16,120 - PLN_Processor - DEBUG -   >> DEBUG VAL: Faltando (final) = ['#VALOR_DESEJADO']
+2025-05-04 13:46:16,120 - PLN_Processor - ERROR - VALIDAÇÃO FALHOU 'Template 1B': Faltando: ['#VALOR_DESEJADO']. Req: {'#ENTIDADE_NOME#', '#DATA#', '#VALOR_DESEJADO'}. Enc: ['#DATA#', '#ENTIDADE_NOME#', '#VALOR_DESEJADO#']
+2025-05-04 13:46:16,121 - PLN_Processor - ERROR - Finalizando c/ erro (status 1): Não foi possível extrair: #VALOR_DESEJADO.
+2025-05-04 13:46:16,121 - PLN_Processor - ERROR -   Detalhes: Tpl:Template 1B, Req:{'#ENTIDADE_NOME#', '#DATA#', '#VALOR_DESEJADO'}, Enc:['#DATA#', '#ENTIDADE_NOME#', '#VALOR_DESEJADO#']
+2025-05-05 09:04:06,243 - PLN_Processor - INFO - --- LOG INICIADO: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\pln_processor.log ---
+2025-05-05 09:04:06,244 - PLN_Processor - INFO - Carregando spaCy...
+2025-05-05 09:04:08,924 - PLN_Processor - INFO - spaCy carregado.
+2025-05-05 09:04:08,925 - PLN_Processor - INFO - Dir script: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources
+2025-05-05 09:04:08,925 - PLN_Processor - INFO - Dic sinonimos: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\resultado_similaridade.txt
+2025-05-05 09:04:08,925 - PLN_Processor - INFO - Perguntas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\perguntas_de_interesse.txt
+2025-05-05 09:04:08,926 - PLN_Processor - INFO - Mapa JSON: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\empresa_nome_map.json
+2025-05-05 09:04:08,927 - PLN_Processor - INFO - Abrindo mapa JSON de: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\empresa_nome_map.json
+2025-05-05 09:04:08,952 - PLN_Processor - INFO - Carregados 726 mapeamentos JSON.
+2025-05-05 09:04:08,953 - PLN_Processor - DEBUG -  Exemplo: ('3RPETROLEUM', 'RRRP3')
+2025-05-05 09:04:08,953 - PLN_Processor - INFO - --- ================================= ---
+2025-05-05 09:04:08,953 - PLN_Processor - INFO - --- INICIANDO PLN_PROCESSOR.PY (PID: 12268) ---
+2025-05-05 09:04:08,953 - PLN_Processor - INFO - --- Args: ['C:\\Users\\MENICIO JR\\Desktop\\Natural2SPARQL-master\\src\\main\\resources\\pln_processor.py', 'Qual foi o preço de fechamento da ação da CSN em 08/05/2023?'] ---
+2025-05-05 09:04:08,956 - PLN_Processor - INFO - --- CWD: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master ---
+2025-05-05 09:04:08,956 - PLN_Processor - INFO - --- Script Dir: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources ---
+2025-05-05 09:04:08,957 - PLN_Processor - INFO - Pergunta: 'Qual foi o preço de fechamento da ação da CSN em 08/05/2023?'
+2025-05-05 09:04:08,957 - PLN_Processor - INFO - Passo 1: NLP...
+2025-05-05 09:04:08,958 - PLN_Processor - DEBUG - spaCy para: 'Qual foi o preço de fechamento da ação da CSN em 08/05/2023?...'
+2025-05-05 09:04:09,015 - PLN_Processor - DEBUG -   NER (spaCy):
+2025-05-05 09:04:09,016 - PLN_Processor - DEBUG -     - 'CSN' (ORG)
+2025-05-05 09:04:09,016 - PLN_Processor - DEBUG -   NER (final): {'ORG': ['CSN']}
+2025-05-05 09:04:09,017 - PLN_Processor - DEBUG -   SPO (simplif.):
+2025-05-05 09:04:09,017 - PLN_Processor - INFO - spaCy OK. SPO: {'sujeito': [], 'predicado': [], 'objeto': []}, NER: {'ORG': ['CSN']}
+2025-05-05 09:04:09,017 - PLN_Processor - DEBUG - Extraindo data de: 'Qual foi o preço de fechamento da ação da CSN em 08/05/2023?'
+2025-05-05 09:04:09,019 - PLN_Processor - INFO - Data explícita encontrada: '08/05/2023' -> 2023-05-08
+2025-05-05 09:04:09,020 - PLN_Processor - INFO - NLP OK.
+2025-05-05 09:04:09,020 - PLN_Processor - INFO - Passo 2: Template...
+2025-05-05 09:04:09,022 - PLN_Processor - DEBUG - Carregando linhas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\perguntas_de_interesse.txt
+2025-05-05 09:04:09,043 - PLN_Processor - INFO - 'perguntas_de_interesse.txt' lido com utf-8.
+2025-05-05 09:04:09,045 - PLN_Processor - DEBUG - Buscando template p/ 'qual foi o preco de fechamento da acao da csn em 08052023' (Lim 0.65) em 18 linhas...
+2025-05-05 09:04:09,046 - PLN_Processor - DEBUG -  -> 'Template 1A' ('qual foi o preco de fechamento da acao da csn em 08052023'): Sim=1.0000
+2025-05-05 09:04:09,046 - PLN_Processor - DEBUG -    --> Melhor: 'Template 1A', 1.0000
+2025-05-05 09:04:09,047 - PLN_Processor - DEBUG -  -> 'Template 1B' ('qual foi o preco de abertura da cbav3 em 08052023'): Sim=0.7358
+2025-05-05 09:04:09,048 - PLN_Processor - DEBUG -  -> 'Template 2A' ('qual o codigo de negociacao da acao da gerdau'): Sim=0.5882
+2025-05-05 09:04:09,048 - PLN_Processor - DEBUG -  -> 'Template 3A' ('quais sao as acoes do setor eletrico'): Sim=0.3226
+2025-05-05 09:04:09,049 - PLN_Processor - DEBUG -  -> 'Template 4A' ('qual foi o volume negociado nas acoes do setor bancario em 05052023'): Sim=0.5484
+2025-05-05 09:04:09,050 - PLN_Processor - DEBUG -  -> 'Template 4B' ('qual foi a quantidade de acoes do itau negociadas no pregao de 05052023'): Sim=0.4062
+2025-05-05 09:04:09,051 - PLN_Processor - DEBUG -  -> 'Template 5A' ('qual foi o preco minimo da acao da vale em 08052023'): Sim=0.8148
+2025-05-05 09:04:09,052 - PLN_Processor - DEBUG -  -> 'Template 5B' ('qual foi o preco minima da acao preferencial do itau em 05052023'): Sim=0.6612
+2025-05-05 09:04:09,052 - PLN_Processor - DEBUG -  -> 'Template 5C' ('qual foi o preco maximo da acao ordinaria da gerdau em 08052023'): Sim=0.7333
+2025-05-05 09:04:09,053 - PLN_Processor - DEBUG -  -> 'Template 6A' ('qual foi a variacao intradiaria absoluta da acao da csn no pregao de 08052023'): Sim=0.5970
+2025-05-05 09:04:09,054 - PLN_Processor - DEBUG -  -> 'Template 7A' ('qual acao do setor de mineracao que teve a maior alta percentual no pregao do dia 08052023'): Sim=0.3537
+2025-05-05 09:04:09,055 - PLN_Processor - DEBUG -  -> 'Template 7B' ('qual acao do setor de bancario que teve a baixa percentual no pregao do dia 08052023'): Sim=0.3688
+2025-05-05 09:04:09,056 - PLN_Processor - DEBUG -  -> 'Template 7C' ('qual acao do setor de consumo nao ciclico que a menor variacao no dia 08052023'): Sim=0.3704
+2025-05-05 09:04:09,057 - PLN_Processor - DEBUG -  -> 'Template 7D' ('qual a acao com o maior percentual de alta no pregao de 08052023'): Sim=0.4463
+2025-05-05 09:04:09,058 - PLN_Processor - DEBUG -  -> 'Template 7E' ('quais as cinco acoes de maior percentual de alta no pregao de 08052023'): Sim=0.3780
+2025-05-05 09:04:09,059 - PLN_Processor - DEBUG -  -> 'Template 7F' ('quais as cinco acoes de maior percentual de baixa no pregao de 08052023'): Sim=0.3906
+2025-05-05 09:04:09,060 - PLN_Processor - DEBUG -  -> 'Template 8A' ('qual foi a variacao intradiaria absoluta da acao do ibovespa com o maior percentual de alta no pregao de 08052023'): Sim=0.4588
+2025-05-05 09:04:09,062 - PLN_Processor - DEBUG -  -> 'Template 8B' ('qual foi o intervalo intradiario percentual da acao com o maior percentual de baixa entre as acoes do imat no pregao de 08052023'): Sim=0.4973
+2025-05-05 09:04:09,063 - PLN_Processor - INFO - Template selecionado: 'Template 1A', Sim=1.0000
+2025-05-05 09:04:09,063 - PLN_Processor - DEBUG -  Linha: 'Template 1A - Qual foi o preço de fechamento da ação da CSN em 08/05/2023?'
+2025-05-05 09:04:09,063 - PLN_Processor - INFO - Template: 'Template 1A' (Sim: 1.0000).
+2025-05-05 09:04:09,064 - PLN_Processor - INFO - Passo 3: Mapeamento...
+2025-05-05 09:04:09,065 - PLN_Processor - DEBUG - Carregando linhas: C:\Users\MENICIO JR\Desktop\Natural2SPARQL-master\src\main\resources\resultado_similaridade.txt
+2025-05-05 09:04:09,090 - PLN_Processor - INFO - 'resultado_similaridade.txt' lido com utf-8.
+2025-05-05 09:04:09,090 - PLN_Processor - INFO - Processando dicionário 'resultado_similaridade.txt' (40 linhas)...
+2025-05-05 09:04:09,092 - PLN_Processor - INFO - Dicionário 'resultado_similaridade.txt' carregado: 21 chaves.
+2025-05-05 09:04:09,093 - PLN_Processor - DEBUG - Mapeando placeholders...
+2025-05-05 09:04:09,093 - PLN_Processor - DEBUG -   - Map #DATA#: '2023-05-08'
+2025-05-05 09:04:09,093 - PLN_Processor - DEBUG -   - Entidades NER p/ busca: [('CSN', 'ORG')]
+2025-05-05 09:04:09,095 - PLN_Processor - DEBUG -     Validando NER: 'CSN' (ORG) -> Up: 'CSN', Norm: 'CSN'
+2025-05-05 09:04:09,095 - PLN_Processor - DEBUG -     --> MATCH EXATO! Canônico='CMIN3CSNA3'
+2025-05-05 09:04:09,095 - PLN_Processor - INFO -   - Map #ENTIDADE_NOME#: 'CMIN3CSNA3' (Origem: 'CSN', Tipo: NER ORG (Match Exato))
+2025-05-05 09:04:09,096 - PLN_Processor - DEBUG -   - Buscando keyword #VALOR_DESEJADO# em: 'qual foi o preço de fechamento da ação da csn em 08/05/2023?'
+2025-05-05 09:04:09,096 - PLN_Processor - DEBUG -   - Keyword ('preço de fechamento') -> chave: 'preco_fechamento'
+2025-05-05 09:04:09,096 - PLN_Processor - INFO -   - Map #VALOR_DESEJADO#: 'preco_fechamento' (Validado)
+2025-05-05 09:04:09,096 - PLN_Processor - INFO - Mapeamentos finais: {'#DATA#': '2023-05-08', '#ENTIDADE_NOME#': 'CMIN3CSNA3', '#VALOR_DESEJADO#': 'preco_fechamento'}
+2025-05-05 09:04:09,097 - PLN_Processor - INFO - Mapeamento OK.
+2025-05-05 09:04:09,097 - PLN_Processor - INFO - Passo 4: Validando placeholders...
+2025-05-05 09:04:09,097 - PLN_Processor - DEBUG -   >> DEBUG VAL: Tpl=Template 1A, Req={'#VALOR_DESEJADO', '#DATA#', '#ENTIDADE_NOME#'}, Enc=['#DATA#', '#ENTIDADE_NOME#', '#VALOR_DESEJADO#']
+2025-05-05 09:04:09,097 - PLN_Processor - DEBUG -     --> Faltando: '#VALOR_DESEJADO'
+2025-05-05 09:04:09,097 - PLN_Processor - DEBUG -     --> Encontrado: '#DATA#'
+2025-05-05 09:04:09,098 - PLN_Processor - DEBUG -     --> Encontrado: '#ENTIDADE_NOME#'
+2025-05-05 09:04:09,098 - PLN_Processor - DEBUG -   >> DEBUG VAL: Faltando (final) = ['#VALOR_DESEJADO']
+2025-05-05 09:04:09,098 - PLN_Processor - ERROR - VALIDAÇÃO FALHOU 'Template 1A': Faltando: ['#VALOR_DESEJADO']. Req: {'#VALOR_DESEJADO', '#DATA#', '#ENTIDADE_NOME#'}. Enc: ['#DATA#', '#ENTIDADE_NOME#', '#VALOR_DESEJADO#']
+2025-05-05 09:04:09,098 - PLN_Processor - ERROR - Finalizando c/ erro (status 1): Não foi possível extrair: #VALOR_DESEJADO.
+2025-05-05 09:04:09,098 - PLN_Processor - ERROR -   Detalhes: Tpl:Template 1A, Req:{'#VALOR_DESEJADO', '#DATA#', '#ENTIDADE_NOME#'}, Enc:['#DATA#', '#ENTIDADE_NOME#', '#VALOR_DESEJADO#']
