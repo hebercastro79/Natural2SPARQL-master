@@ -13743,11 +13743,26 @@ stock:UNIP6_20230505_Negociado
         stock:precoMinimo       "63.0"^^xsd:double ;
         stock:totalNegocios     "2118"^^xsd:long ;
         stock:volumeNegociacao  "311300.0"^^xsd:double .
+		
+		
 
 stock:GGBR3GGBR4  rdf:type     stock:Empresa_Capital_Aberto , stock:Empresa , stock:Valor_Mobiliario_Negociado , rdfs:Resource , _:b0 ;
         rdfs:label             "GERDAU" ;
         stock:atuaEm           stock:Materiais_Basicos_Siderurgia_e_Metalurgia_Siderurgia._ ;
         stock:representadoPor  stock:GGBR3GGBR4_Code .
+		
+		
+
+
+stock:GGBR3_VM rdf:type stock:Valor_Mobiliario_Negociado , stock:Acao ; # Adicionar stock:Ordinaria se aplicável
+    b3:representadoPor stock:GGBR3_Code .
+stock:GGBR4_VM rdf:type stock:Valor_Mobiliario_Negociado , stock:Acao ; # Adicionar stock:Preferencial se aplicável
+    b3:representadoPor stock:GGBR4_Code .
+
+stock:GGBR3_Code rdf:type stock:Codigo_Negociacao ;
+    stock:ticker "GGBR3" .
+stock:GGBR4_Code rdf:type stock:Codigo_Negociacao ;
+    stock:ticker "GGBR4" .		
 
 stock:ENGI11  rdf:type  stock:Empresa_Capital_Aberto , rdfs:Resource , stock:Empresa , _:b0 ;
         stock:temValorMobiliarioNegociado

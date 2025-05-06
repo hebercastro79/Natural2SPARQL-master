@@ -1,46 +1,64 @@
-# Dicionário de Sinônimos para PLN (Bolsa de Valores) - Chaves Padronizadas
-# Formato: chave_snake_case = [('sinonimo 1', 1.0), ('sinonimo 2', 0.85), ...]
-# Chaves principais para busca por Keyword devem existir aqui.
+# Formato: sinonimo_em_minusculas;valor_na_ontologia_ou_placeholder
+# SALVAR COMO UTF-8 (SEM BOM)
 
-# --- Termos Gerais ---
-acao = [('setor economico', 1.0), ('papel', 0.22), ('ativo', 0.44), ('titulo', 0.2), ('quota', 0.22)]
-empresa = [('organizacao economica', 1.0), ('organizacao', 0.22), ('companhia', 0.38), ('corporacao', 0.35), ('sociedade empresarial', 0.5)]
+# --- Mapeamento para #VALOR_DESEJADO# -> #PREDICADO_VALOR# ---
+preco de fechamento;precoFechamento
+ultimo negocio;precoFechamento
+fechamento;precoFechamento
+preco final;precoFechamento
+ultimo preco;precoFechamento
+cotação;precoFechamento
+cotacao;precoFechamento
+preço;precoFechamento
+preco;precoFechamento
+valor;precoFechamento
 
-# --- Indicadores / Valores (Chaves Padronizadas para Busca por Keyword) ---
-codigo = [('codigo de negociacao', 1.0), ('codigo', 0.9), ('ticker', 0.8), ('simbolo', 0.7), ('negociação', 0.6)]
-preco_abertura = [('preco de abertura', 1.0), ('abertura', 0.9)]
-preco_fechamento = [('preco de fechamento', 1.0), ('ultimo negocio', 0.9), ('fechamento', 0.8), ('preco final', 0.7), ('ultimo preco', 0.85), ('cotação', 0.6), ('cotacao', 0.6), ('preço', 0.5), ('preco', 0.5), ('valor', 0.4)]
-preco_medio = [('preco medio', 1.0), ('medio', 0.9), ('media de preco', 0.9)]
-preco_maximo = [('preco maximo', 1.0), ('maxima', 0.9), ('maior preco', 0.8), ('valor maximo', 0.85)]
-preco_minimo = [('preco minimo', 1.0), ('minima', 0.9), ('menor preco', 0.8), ('valor minimo', 0.85)]
-volume_total_negociado = [('volume total negociado', 1.0), ('volume negociado', 0.95), ('volume', 0.9), ('volume financeiro', 0.9), ('volume total', 0.85)]
-quantidade_negociada = [('quantidade de acoes negociadas', 1.0), ('quantidade de papeis', 0.95), ('quantidade negociada', 0.9), ('papeis negociados', 0.85), ('acoes negociadas', 0.8), ('numero de acoes', 0.8)]
-total_negocios = [('numero de negocios', 1.0), ('total de negocios', 0.95), ('quantidade de negocios', 0.9), ('negocios realizados', 0.85)]
-variacao_abs = [('variacao intradiaria absoluta', 1.0), ('variacao absoluta', 0.9), ('oscilacao absoluta', 0.8), ('diferenca absoluta', 0.8)]
-variacao_perc = [('variacao percentual', 1.0), ('percentual de variacao', 0.95), ('alta percentual', 0.8), ('baixa percentual', 0.8), ('variacao em porcentagem', 0.85), ('percentual', 0.7), ('oscilacao percentual', 0.8)]
-intervalo_perc = [('intervalo intradiario percentual', 1.0), ('intervalo percentual', 0.9), ('range percentual', 0.85)]
-# Adicione chaves para outros indicadores se necessário:
-# pl = [('p/l', 1.0), ('pl', 1.0), ('preco/lucro', 0.9), ('preco lucro', 0.9)]
-# dy = [('dividend yield', 1.0), ('dy', 1.0), ('dividendo', 0.8)]
-# lpa = [('lpa', 1.0), ('lucro por acao', 0.9)]
-# vpa = [('vpa', 1.0), ('valor patrimonial por acao', 0.9)]
+preco de abertura;precoAbertura
+abertura;precoAbertura
 
-# --- Tipos de Ação ---
-ordinaria = [('ordinaria', 1.0), ('on', 0.9), ('comum', 0.7), ('acionista possui direito a voto', 0.5)]
-preferencial = [('preferencial', 1.0), ('pn', 0.9), ('preferencia recebimento', 0.7), ('possui preferencia de recebimento de valores', 0.5)]
-classe_a = [('classe a', 1.0),('acionista recebe minimo dividendos', 0.8)]
-classe_b = [('classe b', 1.0), ('acionista recebe valor predefinido dividendo', 0.8)]
+preco medio;precoMedio
+medio;precoMedio
+media de preco;precoMedio
 
-# --- Setores (Exemplos) ---
-setor_financeiro = [('financeiro', 1.0), ('bancos', 0.8), ('seguradoras', 0.7), ('servicos financeiros', 0.9)]
-setor_energia = [('energia', 1.0), ('energia eletrica', 0.9), ('petroleo', 0.8), ('gas', 0.7)]
-setor_materiais_basicos = [('materiais basicos', 1.0), ('mineracao', 0.8), ('siderurgia', 0.8), ('quimicos', 0.7), ('papel e celulose', 0.7)]
-# ... adicione outras chaves e sinônimos de setores ...
+preco maximo;precoMaximo
+maxima;precoMaximo
+maior preco;precoMaximo
+valor maximo;precoMaximo
 
+preco minimo;precoMinimo
+minima;precoMinimo
+menor preco;precoMinimo
+valor minimo;precoMinimo
 
-# --- Seções Antigas (Remover se não forem mais usadas em nenhum lugar) ---
-# acessorios = [('cutelaria', 1.0), ('joias', 1.0), ('relogios', 1.0), ('facas', 0.4), ('armas brancas', 0.26), ('lapidacoes', 0.3), ('bijuterias', 0.4), ('aneis', 0.4), ('aliancas', 0.22)]
-# acucar_e_alcool = [('acucar e alcool', 1.0), ('bioenergia', 1.0), ('derivados da canadeacucar', 0.24), ('bioetanol', 0.25), ('energeticos renovaveis', 0.27), ('insumos agroindustriais', 0.21), ('produtos sucroenergeticos', 0.3)]
-# aereo = [('transporte aereos', 1.0), ('logistica aerea', 1.0), ('aeronautico', 0.5), ('aviacao', 0.33), ('logistica aerea', 0.4), ('setor aerologistico', 0.33)]
-# agricultura = [('insumos agricolas', 1.0), ('semestes', 1.0), ('cereais', 1.0), ('graos e frutas', 1.0), ('agronegocio', 0.36), ('setor agricola', 0.56), ('cultivo', 0.44)]
-# ... (e assim por diante para as outras entradas antigas) ...
+volume total negociado;volumeNegociacao
+volume negociado;volumeNegociacao
+volume;volumeNegociacao
+volume financeiro;volumeNegociacao
+volume total;volumeNegociacao
+
+numero de negocios;totalNegocios
+total de negocios;totalNegocios
+quantidade de negocios;totalNegocios
+negocios realizados;totalNegocios
+
+# --- Mapeamento para Código/Ticker ---
+codigo de negociacao;codigo
+codigo;codigo
+ticker;codigo
+simbolo;codigo
+negociação;codigo
+
+# --- Mapeamento para Setores (Exemplos - Adapte à sua ontologia) ---
+financeiro;Financeiro_Intermediarios_Financeiros_Bancos.
+bancos;Financeiro_Intermediarios_Financeiros_Bancos.
+seguradoras;Previdencia_e_Seguros
+servicos financeiros;Servicos_Financeiros_Diversos
+energia;Utilidade_Publica_Energia_Eltrica.
+energia eletrica;Utilidade_Publica_Energia_Eltrica.
+petroleo;Petrleo._Gs_e_Biocombustveis_Exploracao_Refino_e_Distribuicao.
+gas;Petrleo._Gs_e_Biocombustveis_Exploracao_Refino_e_Distribuicao.
+materiais basicos;Materiais_Basicos
+mineracao;Materiais_Basicos_Mineracao_Minerais_Metalicos.
+siderurgia;Materiais_Basicos_Siderurgia_e_Metalurgia_Siderurgia._
+quimicos;Materiais_Basicos_Quimico
+papel e celulose;Materiais_Basicos_Madeira_e_Papel

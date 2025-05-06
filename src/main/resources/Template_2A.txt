@@ -1,21 +1,26 @@
-# Template 2A: Buscar tickers por nome canônico da empresa
-
-PREFIX : <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+# Template_2A (Workaround 2 - CONTAINS Check)
+PREFIX b3: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-SELECT DISTINCT ?ticker_literal
+SELECT DISTINCT ?individualTicker
 WHERE {
-  # Encontra a URI da Empresa pelo label (case-insensitive, match exato)
-  # ASSUMINDO que o nome canônico está em rdfs:label.
-  # Se estiver em :nomeEmpresa, troque rdfs:label por :nomeEmpresa
-   ?empresa_uri rdfs:label ?nome .
-   FILTER (lcase(str(?nome)) = lcase(#ENTIDADE_NOME#)) . # <-- Usa o nome canônico vindo do Python
+  # 1. Encontre a entidade principal pelo label (ex: "GERDAU")
+  ?mainEntity rdfs:label #ENTIDADE_NOME# . # Espera uma Label com aspas aqui, ex: "GERDAU"
 
-  # A partir da URI da Empresa, encontra a ligação para o(s) Código(s)
-  # ASSUMINDO que a ligação é :temCodigo e o ticker está no :ticker do código.
-  # AJUSTE estas duas linhas conforme a estrutura criada em Ontology.java!
-   ?empresa_uri :temCodigo ?codigo_uri .
-   ?codigo_uri :ticker ?ticker_literal .
+  # 2. Obtenha a string combinada de tickers ligada a essa entidade principal
+  OPTIONAL { ?mainEntity b3:representadoPor/b3:ticker ?combinedTickerString . }
+
+  # 3. Encontre TODOS os recursos de código individuais e seus tickers
+  ?anyCode rdf:type b3:Codigo_Negociacao .
+  ?anyCode b3:ticker ?individualTicker .
+
+  # --- Estratégia de Filtragem ---
+  # Mantenha tickers individuais se eles estão contidos na string combinada (se encontrada)
+   FILTER (BOUND(?combinedTickerString) && CONTAINS(?combinedTickerString, ?individualTicker))
+
+  # Filtro Adicional Essencial: Garante formato válido de ticker
+  FILTER REGEX(?individualTicker, "^[A-Z]{4}[0-9]{1,2}$")
+
 }
-LIMIT 10 # Boa prática para limitar resultados
+LIMIT 20

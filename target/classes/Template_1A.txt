@@ -1,21 +1,21 @@
-# Template_1A.txt (Final Corrected Version - 2025-04-23)
-# Busca Preço de Fechamento por Ticker e Data
-SELECT DISTINCT ?precoFechamento
+# Template_1A.txt (Revertido - Usa #VALOR_DESEJADO# como predicado)
+# Busca valor (dinâmico) por Ticker/Entidade e Data
+PREFIX b3: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT DISTINCT ?valor
 WHERE {
-  # Navega da empresa para a instância de negociação específica
-  ?empresa <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#temValorMobiliarioNegociado> ?valor_mobiliario  .
-  ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#representadoPor> ?codigo .
-  ?codigo <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#ticker> ?ticker_literal . # Obtém o ticker literal
-  ?valor_mobiliario <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociado> ?negociado .
-  ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#negociadoDurante> ?pregao .
+  ?valor_mobiliario b3:representadoPor ?codigo .
+  ?codigo b3:ticker #ENTIDADE_NOME# . # Espera um Ticker com aspas aqui, ex: "CMIN3"
 
-  # Obtém o preço de fechamento
-  ?negociado <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#precoFechamento> ?precoFechamento .
+  ?valor_mobiliario b3:negociado ?negociado .
+  ?negociado b3:negociadoDurante ?pregao .
 
-  # Filtra pela data exata (Java substitui #DATA# por "YYYY-MM-DD"^^xsd:date)
-  ?pregao <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#ocorreEmData> #DATA# .
+  # Usa #VALOR_DESEJADO# diretamente para o predicado (Java adicionará b3:)
+  ?negociado #VALOR_DESEJADO# ?valor . # <-- REVERTIDO
 
-  # Filtra pelo ticker (Java substitui #ENTIDADE_NOME# por "TICKER_OU_LISTA")
-  FILTER CONTAINS(lcase(#ENTIDADE_NOME#), lcase(str(?ticker_literal))) .
+  ?pregao b3:ocorreEmData #DATA# . # Espera data com aspas e tipo, ex: "2023-05-08"^^xsd:date
 }
-LIMIT 10 # Boa prática
+LIMIT 10

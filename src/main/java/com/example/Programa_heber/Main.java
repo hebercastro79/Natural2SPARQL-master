@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
+import java.io.IOException; // Ainda necessário para o try-catch do index()
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -28,18 +28,19 @@ public class Main {
 
     private final QuestionProcessor questionProcessor;
 
-    public static void main(String[] args) {
-        SpringApplication.run(Main.class, args);
-    }
-
     @Autowired
     public Main(QuestionProcessor questionProcessor) {
         this.questionProcessor = questionProcessor;
         if (this.questionProcessor != null) {
-            logger.info("Classe Main inicializada com QuestionProcessor: OK");
+            logger.info("Classe Main (Controller) inicializada com QuestionProcessor: OK");
         } else {
-            logger.error("!!!!!!!!!! Classe Main inicializada com QuestionProcessor NULO !!!!!!!!!!");
+            logger.error("!!!!!!!!!! CRÍTICO: QuestionProcessor não foi injetado via construtor !!!!!!!!!!");
         }
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(Main.class, args);
+        logger.info("Aplicação Natural2SPARQL iniciada.");
     }
 
     @GetMapping(value = "/", produces = MediaType.TEXT_HTML_VALUE)
@@ -48,70 +49,81 @@ public class Main {
         try {
             ClassPathResource resource = new ClassPathResource("static/index2.html");
             if (!resource.exists()) {
-                logger.error("Arquivo index2.html não encontrado em static/");
+                logger.warn("Arquivo index2.html não encontrado em static/, tentando na raiz do classpath...");
                 resource = new ClassPathResource("index2.html");
-                if (!resource.exists()){
-                    logger.error("Arquivo index2.html também não encontrado na raiz do resources/");
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Página inicial não encontrada.");
+                if (!resource.exists()) {
+                    logger.error("Arquivo index2.html não encontrado na raiz do classpath também.");
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Página inicial não encontrada (index2.html).");
                 }
-                logger.warn("Arquivo index2.html encontrado na raiz do resources, mas deveria estar em /static.");
             }
 
             String htmlContent;
             try (Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
                 htmlContent = FileCopyUtils.copyToString(reader);
             }
-            logger.debug("Servindo index2.html");
+            logger.debug("Servindo index2.html de {}", resource.getPath());
             return ResponseEntity.ok(htmlContent);
-        } catch (IOException e) {
+        } catch (IOException e) { // try-catch necessário para File I/O aqui
             logger.error("Erro ao ler o arquivo index2.html", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao carregar a página inicial.");
         }
     }
 
+
     @PostMapping("/processar_pergunta")
     public ResponseEntity<RespostaReply> processarPergunta(@RequestBody PerguntaRequest request) {
-        if (questionProcessor == null) {
-            logger.error("QuestionProcessor não foi injetado corretamente!");
-            RespostaReply errorReply = new RespostaReply();
-            errorReply.setErro("Erro interno crítico: Serviço de processamento indisponível.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorReply);
-        }
-
         if (request == null || request.getPergunta() == null || request.getPergunta().trim().isEmpty()) {
-            logger.warn("Requisição POST recebida sem pergunta válida.");
+            logger.warn("Requisição POST recebida sem pergunta válida no corpo.");
             RespostaReply errorReply = new RespostaReply();
             errorReply.setErro("Nenhuma pergunta fornecida.");
             return ResponseEntity.badRequest().body(errorReply);
         }
 
-        logger.info("Requisição POST recebida em /processar_pergunta com pergunta: '{}'", request.getPergunta());
-        String resultado = questionProcessor.processQuestion(request.getPergunta());
-        RespostaReply reply = new RespostaReply();
-
-        if (resultado == null || resultado.trim().isEmpty()) {
-            logger.error("QuestionProcessor retornou resultado nulo ou vazio para a pergunta: {}", request.getPergunta());
-            reply.setErro("Erro interno ao processar a pergunta.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(reply);
-        } else if (resultado.startsWith("Erro")) {
-            logger.warn("Erro retornado pelo serviço QuestionProcessor: {}", resultado);
-            reply.setErro(resultado);
-            // Ajusta o status baseado na mensagem de erro
-            HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR; // Padrão para erros
-            if (resultado.contains("Não foi possível montar consulta") || resultado.contains("identificar o que buscar")) {
-                status = HttpStatus.INTERNAL_SERVER_ERROR;
-            } else if (resultado.contains("Falha ao processar a pergunta com o script") || resultado.contains("comunicar com o processador")) {
-                status = HttpStatus.SERVICE_UNAVAILABLE; // Ou INTERNAL_SERVER_ERROR
-            }
-            return ResponseEntity.status(status).body(reply);
-        } else if (resultado.equals("Não foram encontrados resultados.")) {
-            logger.info("Nenhum resultado encontrado para a pergunta.");
-            reply.setResposta(resultado);
-            return ResponseEntity.ok(reply);
-        } else {
-            logger.info("Pergunta processada com sucesso. Resposta: '{}'", resultado);
-            reply.setResposta(resultado);
-            return ResponseEntity.ok(reply);
+        if (questionProcessor == null) {
+            logger.error("CRÍTICO: QuestionProcessor é nulo no momento da requisição!");
+            RespostaReply errorReply = new RespostaReply();
+            errorReply.setErro("Erro interno crítico: Serviço de processamento indisponível.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorReply);
         }
+
+        logger.info("Requisição POST recebida em /processar_pergunta com pergunta: '{}'", request.getPergunta());
+        String resultado;
+        RespostaReply reply = new RespostaReply();
+        HttpStatus status = HttpStatus.OK;
+
+        try {
+            // A chamada a processQuestion agora não declara checked exceptions
+            resultado = questionProcessor.processQuestion(request.getPergunta());
+
+            // Trata a string de resultado retornada
+            if (resultado == null || resultado.trim().isEmpty()) {
+                logger.error("QuestionProcessor retornou resultado nulo ou vazio para a pergunta: {}", request.getPergunta());
+                reply.setErro("Erro interno ao processar a pergunta (resultado vazio).");
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+            } else if (resultado.startsWith("Erro:")) { // Checa se o resultado é uma string de erro
+                logger.warn("Erro retornado pelo serviço QuestionProcessor: {}", resultado);
+                reply.setErro(resultado);
+                status = HttpStatus.INTERNAL_SERVER_ERROR; // Padrão para erros lógicos
+                if (resultado.contains("Falha ao processar a pergunta com o script") || resultado.contains("comunicar com o processador") || resultado.contains("Script Python não encontrado")) {
+                    status = HttpStatus.SERVICE_UNAVAILABLE;
+                } else if (resultado.contains("Template não encontrado")) {
+                    status = HttpStatus.NOT_IMPLEMENTED; // Ou INTERNAL_SERVER_ERROR
+                }
+            } else if (resultado.equals("Não foram encontrados resultados que correspondam à sua pergunta.")) {
+                logger.info("Nenhum resultado encontrado para a pergunta.");
+                reply.setResposta(resultado);
+            } else {
+                logger.info("Pergunta processada com sucesso. Resposta: '{}'", resultado);
+                reply.setResposta(resultado);
+            }
+
+        } catch (RuntimeException e) { // Captura erros não verificados (ex: erro no Python, JSON)
+            logger.error("Erro inesperado (RuntimeException) ao processar pergunta '{}': {}", request.getPergunta(), e.getMessage(), e);
+            reply.setErro("Erro inesperado no servidor: " + e.getMessage());
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        // Não precisa mais de catch para IOException ou InterruptedException aqui
+
+        return ResponseEntity.status(status).body(reply);
     }
 }
