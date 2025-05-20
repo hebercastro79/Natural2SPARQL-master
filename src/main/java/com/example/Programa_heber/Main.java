@@ -1,7 +1,8 @@
 package com.example.Programa_heber;
 
 import com.example.Programa_heber.model.PerguntaRequest;
-import com.example.Programa_heber.model.RespostaReply;
+// Importa a nova classe de resposta detalhada
+import com.example.Programa_heber.model.ProcessamentoDetalhadoResposta;
 import com.example.Programa_heber.service.QuestionProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException; // Ainda necessário para o try-catch do index()
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -63,7 +64,7 @@ public class Main {
             }
             logger.debug("Servindo index2.html de {}", resource.getPath());
             return ResponseEntity.ok(htmlContent);
-        } catch (IOException e) { // try-catch necessário para File I/O aqui
+        } catch (IOException e) {
             logger.error("Erro ao ler o arquivo index2.html", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao carregar a página inicial.");
         }
@@ -71,59 +72,58 @@ public class Main {
 
 
     @PostMapping("/processar_pergunta")
-    public ResponseEntity<RespostaReply> processarPergunta(@RequestBody PerguntaRequest request) {
+    // Muda o tipo de retorno para ResponseEntity<ProcessamentoDetalhadoResposta>
+    public ResponseEntity<ProcessamentoDetalhadoResposta> processarPergunta(@RequestBody PerguntaRequest request) {
         if (request == null || request.getPergunta() == null || request.getPergunta().trim().isEmpty()) {
             logger.warn("Requisição POST recebida sem pergunta válida no corpo.");
-            RespostaReply errorReply = new RespostaReply();
+            ProcessamentoDetalhadoResposta errorReply = new ProcessamentoDetalhadoResposta();
             errorReply.setErro("Nenhuma pergunta fornecida.");
+            errorReply.setSparqlQuery("N/A - Nenhuma pergunta fornecida.");
             return ResponseEntity.badRequest().body(errorReply);
         }
 
         if (questionProcessor == null) {
             logger.error("CRÍTICO: QuestionProcessor é nulo no momento da requisição!");
-            RespostaReply errorReply = new RespostaReply();
+            ProcessamentoDetalhadoResposta errorReply = new ProcessamentoDetalhadoResposta();
             errorReply.setErro("Erro interno crítico: Serviço de processamento indisponível.");
+            errorReply.setSparqlQuery("N/A - Serviço indisponível.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorReply);
         }
 
         logger.info("Requisição POST recebida em /processar_pergunta com pergunta: '{}'", request.getPergunta());
-        String resultado;
-        RespostaReply reply = new RespostaReply();
-        HttpStatus status = HttpStatus.OK;
 
-        try {
-            // A chamada a processQuestion agora não declara checked exceptions
-            resultado = questionProcessor.processQuestion(request.getPergunta());
+        // Chama o método que agora retorna ProcessamentoDetalhadoResposta
+        ProcessamentoDetalhadoResposta respostaDetalhada = questionProcessor.processQuestion(request.getPergunta());
+        HttpStatus status = HttpStatus.OK; // Status padrão para sucesso
 
-            // Trata a string de resultado retornada
-            if (resultado == null || resultado.trim().isEmpty()) {
-                logger.error("QuestionProcessor retornou resultado nulo ou vazio para a pergunta: {}", request.getPergunta());
-                reply.setErro("Erro interno ao processar a pergunta (resultado vazio).");
-                status = HttpStatus.INTERNAL_SERVER_ERROR;
-            } else if (resultado.startsWith("Erro:")) { // Checa se o resultado é uma string de erro
-                logger.warn("Erro retornado pelo serviço QuestionProcessor: {}", resultado);
-                reply.setErro(resultado);
-                status = HttpStatus.INTERNAL_SERVER_ERROR; // Padrão para erros lógicos
-                if (resultado.contains("Falha ao processar a pergunta com o script") || resultado.contains("comunicar com o processador") || resultado.contains("Script Python não encontrado")) {
-                    status = HttpStatus.SERVICE_UNAVAILABLE;
-                } else if (resultado.contains("Template não encontrado")) {
-                    status = HttpStatus.NOT_IMPLEMENTED; // Ou INTERNAL_SERVER_ERROR
-                }
-            } else if (resultado.equals("Não foram encontrados resultados que correspondam à sua pergunta.")) {
-                logger.info("Nenhum resultado encontrado para a pergunta.");
-                reply.setResposta(resultado);
-            } else {
-                logger.info("Pergunta processada com sucesso. Resposta: '{}'", resultado);
-                reply.setResposta(resultado);
+        // Verifica se houve erro no processamento vindo do QuestionProcessor
+        if (respostaDetalhada.getErro() != null) {
+            logger.warn("Erro retornado pelo serviço QuestionProcessor: {}", respostaDetalhada.getErro());
+            // Determina o status HTTP baseado no erro
+            status = HttpStatus.INTERNAL_SERVER_ERROR; // Padrão
+            String erroMsg = respostaDetalhada.getErro().toLowerCase(); // Para facilitar a verificação
+
+            if (erroMsg.contains("falha ao interpretar") ||
+                    erroMsg.contains("não foi possível determinar o tipo") ||
+                    erroMsg.contains("falha ao obter os detalhes") ||
+                    erroMsg.contains("template sparql não encontrado") ||
+                    erroMsg.contains("informação faltando")) {
+                status = HttpStatus.BAD_REQUEST; // Erro de input do usuário ou configuração de template
+            } else if (erroMsg.contains("erro na execução do script python") ||
+                    erroMsg.contains("comunicar com o processador") ||
+                    erroMsg.contains("script python não encontrado") ||
+                    erroMsg.contains("falha crítica ao inicializar")) {
+                status = HttpStatus.SERVICE_UNAVAILABLE; // Problema com o serviço Python
+            } else if (erroMsg.contains("erro ao executar a consulta sparql")){
+                // Mantém INTERNAL_SERVER_ERROR ou pode ser específico se a causa for mais detalhada
             }
-
-        } catch (RuntimeException e) { // Captura erros não verificados (ex: erro no Python, JSON)
-            logger.error("Erro inesperado (RuntimeException) ao processar pergunta '{}': {}", request.getPergunta(), e.getMessage(), e);
-            reply.setErro("Erro inesperado no servidor: " + e.getMessage());
-            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        } else if (respostaDetalhada.getResposta() == null || respostaDetalhada.getResposta().equals("Não foram encontrados resultados que correspondam à sua pergunta.")) {
+            logger.info("Nenhum resultado encontrado para a pergunta ou resposta padrão de 'não encontrado'.");
+            // Status OK, mas a resposta indica que não há dados.
+        } else {
+            logger.info("Pergunta processada com sucesso.");
         }
-        // Não precisa mais de catch para IOException ou InterruptedException aqui
 
-        return ResponseEntity.status(status).body(reply);
+        return ResponseEntity.status(status).body(respostaDetalhada);
     }
 }

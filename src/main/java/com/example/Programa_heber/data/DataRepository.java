@@ -14,9 +14,9 @@ public class DataRepository {
 
     private Connection connection;
 
-    private final String DB_URL = "jdbc:mysql://localhost:3306/bd_sparql"; //SEU BANCO
-    private final String DB_USER = "heber";       //SEU USUARIO
-    private final String DB_PASSWORD = "G@b1p3p3"; //SUA SENHA
+    private final String DB_URL = "jdbc:mysql://localhost:3306/bd_sparql"; //BANCO de DADOS
+    private final String DB_USER = "heber";       //USUARIO
+    private final String DB_PASSWORD = "G@b1p3p3"; //SENHA
 
     public DataRepository() {
         try {
@@ -110,7 +110,7 @@ public class DataRepository {
 
     public List<InformacoesEmpresasDb> getAllInformacoesEmpresas() {
         List<InformacoesEmpresasDb> dados = new ArrayList<>();
-        String sql = "SELECT * FROM Informacoes_Empresas"; // Sem aspas simples
+        String sql = "SELECT * FROM Informacoes_Empresas";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {

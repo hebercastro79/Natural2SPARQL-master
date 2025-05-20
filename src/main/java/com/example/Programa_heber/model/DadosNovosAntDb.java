@@ -55,7 +55,7 @@ public class DadosNovosAntDb {
     @Column(name = "volume_total_negociado")
     private Long volumeTotalNegociado;
 
-    @Column(name = "tipo_acao")  //Adicionei tipo_acao
+    @Column(name = "tipo_acao")
     private String tipoAcao;
 
     // Construtores (obrigatório para JPA)

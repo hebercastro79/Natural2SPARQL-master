@@ -1,0 +1,20 @@
+# Template_5A.txt
+PREFIX stock: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?valor # (Opcional: ?codigo ?valor se quiser retornar o ticker também)
+WHERE {
+  ?empresa rdf:type stock:Empresa_Capital_Aberto .
+  ?empresa rdfs:label ?nomeEmpresa .
+  FILTER regex(str(?nomeEmpresa), "<<NOME_EMPRESA>>", "i") .
+  ?empresa stock:temValorMobiliarioNegociado ?valorMobiliario .
+  # (Opcional: Adicionar linhas para obter ?codigo se desejar retorná-lo)
+  # ?valorMobiliario stock:representadoPor ?codigoInst .
+  # ?codigoInst stock:ticker ?codigo .
+  ?valorMobiliario stock:negociado ?negociadoInst .
+  ?negociadoInst stock:negociadoDurante ?pregao .
+  ?pregao stock:ocorreEmData "<<DATA>>"^^xsd:date .
+  # Obtém o preço mínimo
+  ?negociadoInst stock:precoMinimo ?valor .
+}

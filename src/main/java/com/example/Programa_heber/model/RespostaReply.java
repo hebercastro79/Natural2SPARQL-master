@@ -1,11 +1,6 @@
 package com.example.Programa_heber.model;
 
-// Se usar Lombok, pode substituir os getters/setters por @Getter @Setter ou @Data
-// import lombok.Getter;
-// import lombok.Setter;
 
-// @Getter
-// @Setter
 public class RespostaReply {
 
     private String resposta;

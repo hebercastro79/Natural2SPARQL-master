@@ -3,66 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geração de consultas SPARQL a partir de linguagem natural</title>
+    <title>Natural2SPARQL -  SPARQL Queries </title>
+    <!-- Adicione esta linha para Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body, html {
             margin: 0;
             padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #c3c5c4; /* Cor de fundo como no seu código */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #0d47a1;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            /* --- PROPRIEDADES PARA FIXAR O HEADER (CORRIGIDO) --- */
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: 100%;
+            z-index: 1000;
+            box-sizing: border-box;
         }
-        .container {
+
+        header img.logo-img {
+            height: 40px;
+            margin-right: 15px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        .main-container {
+            flex-grow: 1;
             width: 100%;
-            height: 100%;
+            max-width: 1200px;
+            /* --- AJUSTE DE MARGIN-TOP PARA NÃO FICAR SOB O HEADER FIXO (CORRIGIDO) --- */
+            /* Altura do header (15+40+15=70px) + margem original desejada (20px) = 90px */
+            margin: 90px auto 20px auto;
+            padding: 20px;
+            box-sizing: border-box;
         }
-        .form-group {
-            margin-bottom: 20px;
+
+        .input-section {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
         }
-        .logo {
+
+        .input-section label {
             display: block;
-            margin: 0 auto;
-            max-width: 100%;
-            height: auto;
-            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 8px;
         }
-        #pergunta {
-            width: 100%; 
+
+        .input-section input[type="text"] {
+            width: calc(100% - 24px);
+            padding: 12px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
         }
-        .form-control {
-            font-size: 18px; 
-            padding: 10px; 
+
+        .button-group {
+            display: flex;
+            gap: 10px;
         }
-        .resposta-grande {
-            font-size: 30px; 
+
+        .input-section button {
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px; /* Espaço entre o texto e o ícone */
         }
-        .btn {
-            margin-right: 10px; /* Espaçamento entre os botões */
-            padding: 10px 20px; /* Ajuste do padding do botão */
-            font-size: 18px; /* Ajuste do tamanho da fonte do botão */
+
+        #btn-consultar {
+            background-color: #27ae60;
+        }
+        #btn-consultar:hover {
+            background-color: #229954;
+        }
+
+        #btn-limpar {
+            background-color: #27ae60;
+        }
+        #btn-limpar:hover {
+            background-color: #229954;
+        }
+
+
+        .output-container {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
+        .output-section {
+            flex: 1;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .output-section pre, .output-section div#resultado-display {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 100px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        
+        .output-section pre {
+             font-family: 'Courier New', Courier, monospace;
+             font-size: 0.9em;
+        }
+
+        .resultado-texto {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: black;
+        }
+        .resultado-texto.erro {
+            color: red;
+            font-weight: normal;
+            font-size: 1em;
+        }
+
+
+        footer {
+            background-color: #0d47a1;
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 0.9em;
+            margin-top: auto;
+        }
+
+        .placeholder-text {
+            color: #888;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <img src="/static/banner_lssb3.jpg" alt="Banner">
-    <h1>Geração de consultas SPARQL a partir de linguagem natural</h1>
-    <div class="form-group">
-        <label for="pergunta"><h2>Faça sua pergunta:</h2></label>
-        <input type="text" id="pergunta" class="form-control" placeholder="Digite sua pergunta aqui">
+    <header>
+        <img src="https://cygri.github.io/rdf-logos/svg/sparql.svg" alt="SPARQL Logo" class="logo-img">
+        <h1>Natural2SPARQL</h1>
+    </header>
+
+    <div class="main-container">
+        <div class="input-section">
+            <label for="pergunta">Ask your question in natural language</label>
+            <input type="text" id="pergunta" placeholder="Enter your question">
+            <div class="button-group">
+                <button id="btn-consultar">RUN QUERY <i class="fas fa-arrow-right"></i></button>
+                <button id="btn-limpar"><i class="fas fa-sync-alt"></i> NEW QUERY</button>
+            </div>
+        </div>
+
+        <div class="output-container">
+            <div class="output-section">
+                <h3>SPARQL Query</h3>
+                <pre id="sparql-query-display"><span class="placeholder-text">The SPARQL query will appear here...</span></pre>
+            </div>
+            <div class="output-section">
+                <h3>Query Result</h3>
+                <div id="resultado-display"><span class="placeholder-text">The result will appear here...</span></div>
+            </div>
+        </div>
     </div>
-    <button id="btn-armazenar-pergunta" class="btn">RUN QUERY</button>
-    <button id="btn-limpar" class="btn">NEW QUERY</button>
-    <div id="resposta"></div> <!-- Adicionado para exibir a resposta -->
-</div>
+
+    <footer>
+        © 2025 Natural2SPARQL - Natural language SPARQL queries
+    </footer>
 
 <script>
-    document.getElementById('btn-armazenar-pergunta').addEventListener('click', armazenarPergunta);
-    document.getElementById('btn-limpar').addEventListener('click', limparTela);
+    document.getElementById('btn-consultar').addEventListener('click', processarPergunta);
+    document.getElementById('btn-limpar').addEventListener('click', limparCampos);
 
-    function armazenarPergunta() {
-        var pergunta = document.getElementById('pergunta').value;
+    const perguntaInput = document.getElementById('pergunta');
+    const sparqlDisplay = document.getElementById('sparql-query-display');
+    const resultadoDisplay = document.getElementById('resultado-display');
 
-        // Envia a pergunta para o servidor Java
+    perguntaInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            processarPergunta();
+        }
+    });
+
+    function processarPergunta() {
+        const pergunta = perguntaInput.value.trim();
+        if (!pergunta) {
+            // Mensagem de erro em português, conforme seu código original
+            resultadoDisplay.innerHTML = '<span class="resultado-texto erro">Por favor, digite uma pergunta.</span>';
+            // Limpa também a área da query SPARQL (CORRIGIDO/ADICIONADO)
+            sparqlDisplay.innerHTML = '<span class="placeholder-text">The SPARQL query will appear here...</span>';
+            return;
+        }
+
+        // Placeholders em inglês, conforme seu código
+        sparqlDisplay.innerHTML = '<span class="placeholder-text">Processing your question...</span>';
+        resultadoDisplay.innerHTML = '<span class="placeholder-text">Waiting for result...</span>';
+        
         fetch('/processar_pergunta', {
             method: 'POST',
             headers: {
@@ -70,28 +249,59 @@
             },
             body: JSON.stringify({ pergunta: pergunta })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    let errorMessage = "Erro desconhecido do servidor."; // Mantido em português
+                    if (errorData && errorData.erro) {
+                        errorMessage = errorData.erro;
+                    } else {
+                        errorMessage = `Erro HTTP: ${response.status} ${response.statusText}`;
+                    }
+                    let sparqlQueryOnError = "N/A";
+                    if (errorData && errorData.sparqlQuery) {
+                        sparqlQueryOnError = errorData.sparqlQuery;
+                    }
+                    throw {
+                        message: errorMessage,
+                        sparqlQuery: sparqlQueryOnError,
+                        isHttpError: true
+                    };
+                }).catch(() => {
+                     throw {
+                        message: `Erro HTTP: ${response.status} ${response.statusText}`,
+                        sparqlQuery: "N/A - Falha ao ler corpo do erro.", // Mantido em português/técnico
+                        isHttpError: true
+                    };
+                });
+            }
+            return response.json();
+        })
         .then(data => {
-            // Exibe a resposta na página HTML
-            var respostaDiv = document.getElementById('resposta');
-            // Limpar a div antes de adicionar novos conteúdos
-            respostaDiv.innerHTML = '';
+            sparqlDisplay.textContent = data.sparqlQuery || 'Consulta SPARQL não disponível.'; // Mantido em português
+            sparqlDisplay.classList.remove('placeholder-text');
 
-            // Criar parágrafos para cada informação
-            var respostaText = document.createElement('p');
-            respostaText.className = 'resposta-grande';
-            respostaText.innerHTML = `<b>Resposta:</b> ${data.resposta}`; // Extrai a resposta do objeto JSON
-            respostaDiv.appendChild(respostaText);
+            if (data.erro) {
+                resultadoDisplay.innerHTML = `<span class="resultado-texto erro">Erro: ${data.erro}</span>`; // Mantido em português
+            } else {
+                resultadoDisplay.innerHTML = `<span class="resultado-texto">${data.resposta || 'Nenhuma resposta recebida.'}</span>`; // Mantido em português
+            }
+            resultadoDisplay.classList.remove('placeholder-text');
         })
         .catch(error => {
-            console.error('Erro:', error);
-            document.getElementById('resposta').innerHTML = '<p class="resposta-grande">Erro ao processar a pergunta.</p>';
+            console.error('Erro na requisição:', error); // Técnico
+            sparqlDisplay.textContent = error.sparqlQuery || 'Erro ao conectar com o servidor ou processar a requisição.'; // Mantido em português
+            resultadoDisplay.innerHTML = `<span class="resultado-texto erro">Erro: ${error.message || 'Falha na comunicação.'}</span>`; // Mantido em português
+            sparqlDisplay.classList.remove('placeholder-text');
+            resultadoDisplay.classList.remove('placeholder-text');
         });
     }
 
-    function limparTela() {
-        document.getElementById('pergunta').value = '';
-        document.getElementById('resposta').innerHTML = '';
+    function limparCampos() {
+        perguntaInput.value = '';
+        // Placeholders em inglês para consistência com o HTML (CORRIGIDO)
+        sparqlDisplay.innerHTML = '<span class="placeholder-text">The SPARQL query will appear here...</span>';
+        resultadoDisplay.innerHTML = '<span class="placeholder-text">The result will appear here...</span>';
     }
 </script>
 </body>

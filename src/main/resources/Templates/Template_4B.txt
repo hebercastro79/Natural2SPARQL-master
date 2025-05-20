@@ -1,0 +1,26 @@
+# Template_4B.txt
+PREFIX stock: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?codigo ?quantidade
+WHERE {
+  # Encontra a empresa pelo nome (label)
+  ?empresa rdf:type stock:Empresa_Capital_Aberto .
+  ?empresa rdfs:label ?nomeEmpresa .
+  # Usar regex ou contains para flexibilidade no nome da empresa
+  FILTER regex(str(?nomeEmpresa), "<<NOME_EMPRESA>>", "i") .
+  # Liga a empresa ao(s) seu(s) valor(es) mobiliário(s)
+  ?empresa stock:temValorMobiliarioNegociado ?valorMobiliario .
+  # Obtém o código (ticker) do valor mobiliário
+  ?valorMobiliario stock:representadoPor ?codigoInst .
+  ?codigoInst stock:ticker ?codigo .
+  # Encontra a instância de negociação para esse valor mobiliário
+  ?valorMobiliario stock:negociado ?negociadoInst .
+  # Liga a instância de negociação ao pregão (dia)
+  ?negociadoInst stock:negociadoDurante ?pregao .
+  # Filtra pelo dia do pregão específico
+  ?pregao stock:ocorreEmData "<<DATA>>"^^xsd:date .
+  # Obtém o número total de negócios (usado como "quantidade")
+  ?negociadoInst stock:totalNegocios ?quantidade .
+}
