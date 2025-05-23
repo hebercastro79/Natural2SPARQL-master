@@ -1,6 +1,11 @@
-Flask==2.0.2
-transformers==4.15.0
-torch==1.10.1
-nltk==3.6.5
-rdflib
+Flask
 gunicorn
+spacy
+
+# Estas são grandes, adicione apenas se estritamente necessário pelo seu código Python
+# ou se o spaCy falhar sem elas de forma explícita.
+# transformers
+# torch
+
+# Opcional, se você usar nltk
+# nltk
