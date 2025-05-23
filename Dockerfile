@@ -11,17 +11,15 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia o restante dos arquivos da aplicação para o diretório de trabalho no container
+# Isso copiará a pasta 'src', 'ontologies', etc., para dentro de '/app'
 COPY . .
 
-# (Opcional, mas bom para debug inicial) Lista o conteúdo do diretório /app
-RUN ls -la /app
+# REMOVA ESTA LINHA DE DEBUG (se ainda estiver lá)
+# RUN ls -la /app
 
-# Expõe a porta que a aplicação Flask usa (conforme definido em app.py)
+# Expõe a porta que a aplicação Flask usa (conforme definido em app.py ou gunicorn)
 EXPOSE 5000
 
 # Comando para rodar a aplicação quando o container iniciar
-# Use Gunicorn para um servidor mais robusto, ou python app.py para o dev server
-# Certifique-se que gunicorn está em requirements.txt se for usar
-# CMD ["python", "app.py"]
-# OU (recomendado para produção/PaaS):
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+# Gunicorn vai mudar para o diretório 'src' (que estará em /app/src) antes de carregar 'app:app'
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--chdir", "src", "app:app"]
