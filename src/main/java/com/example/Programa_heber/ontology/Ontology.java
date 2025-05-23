@@ -1,4 +1,4 @@
-package com.example.Programa_heber.ontology; // Ajuste o pacote se necessário
+package com.example.Programa_heber.ontology;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.jena.query.*;
@@ -23,14 +23,17 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Normalizer; // Para normalizarTextoJava
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.StringJoiner;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern; // Para normalizarTextoJava
 
 @Component
 public class Ontology {
@@ -41,53 +44,48 @@ public class Ontology {
     private InfModel infModel;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    // Prefixo da sua ontologia
     private static final String ONT_PREFIX = "https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#";
-
 
     private static final String[] PREGAO_FILES = {
             "/datasets/dados_novos_anterior.xlsx",
             "/datasets/dados_novos_atual.xlsx"
     };
-    private static final String SCHEMA_FILE = "/stock_market.owl";   // Na raiz de resources
-    private static final String BASE_DATA_FILE = "/ontologiaB3.ttl"; // Na raiz de resources
-    // ------------------------------------------------------------------------------------
-
-    // Arquivo de saída para o modelo inferido (será salvo na raiz do projeto)
+    private static final String SCHEMA_FILE = "/stock_market.owl";
+    private static final String BASE_DATA_FILE = "/ontologiaB3.ttl";
+    // Ajuste este caminho para onde seu arquivo está em src/main/resources
+    private static final String INFO_EMPRESAS_FILE = "/Templates/Informacoes_Empresas.xlsx";
     private static final String INFERENCE_OUTPUT_FILE = "ontologiaB3_com_inferencia.ttl";
 
     @PostConstruct
     public void init() {
         logger.info(">>> INICIANDO Inicialização Ontology (@PostConstruct)...");
-        lock.writeLock().lock(); // Bloqueio de escrita para inicialização segura
+        lock.writeLock().lock();
         try {
             baseModel = ModelFactory.createDefaultModel();
-            baseModel.setNsPrefix("stock", ONT_PREFIX); // Usa 'stock' como prefixo para a ontologia (consistente com o TTL)
+            baseModel.setNsPrefix("stock", ONT_PREFIX);
             baseModel.setNsPrefix("rdf", RDF.uri);
             baseModel.setNsPrefix("rdfs", RDFS.uri);
             baseModel.setNsPrefix("owl", OWL.NS);
             baseModel.setNsPrefix("xsd", XSDDatatype.XSD + "#");
             logger.info("   Modelo base criado e prefixos definidos.");
 
-            // 1. Carregar Schema OWL
             loadRdfData(SCHEMA_FILE, Lang.RDFXML, "Schema OWL");
-
-            // 2. Carregar Dados Base TTL
             loadRdfData(BASE_DATA_FILE, Lang.TURTLE, "Dados base TTL");
 
-            // 3. Carregar Dados Dinâmicos das Planilhas de Pregão
+            logger.info("--- Iniciando carregamento Informações das Empresas ---");
+            loadInformacoesEmpresas(INFO_EMPRESAS_FILE);
+            logger.info("--- Carregamento Informações das Empresas concluído ---");
+
             logger.info("--- Iniciando carregamento planilhas de pregão ---");
             for (String filePath : PREGAO_FILES) {
-                loadExcelData(filePath); // Chama o método com o caminho corrigido
+                loadDadosPregaoExcel(filePath);
             }
             logger.info("--- Carregamento planilhas pregão concluído ---");
 
             long baseSizeBeforeInfer = baseModel.size();
             logger.info("Total triplas BASE (pós-load): {}", baseSizeBeforeInfer);
-
             validateBaseModelLoad(baseSizeBeforeInfer);
 
-            // 4. Configurar e Aplicar Raciocinador (Inferência)
             logger.info("--- Configurando Reasoner ---");
             Reasoner reasoner = getReasoner();
             logger.info("--- Criando modelo inferência ---");
@@ -95,386 +93,311 @@ public class Ontology {
             long infSize = infModel.size();
             long inferredCount = infSize - baseSizeBeforeInfer;
             logger.info("--- Modelo inferência criado. Base:{}, Inferidas:{}, Total:{} ---",
-                    baseSizeBeforeInfer, (inferredCount < 0 ? 0 : inferredCount), infSize);
+                    baseSizeBeforeInfer, Math.max(0, inferredCount), infSize);
 
-            // 5. Salvar modelo inferido (opcional)
             saveInferredModel();
-
             logger.info("<<< Ontology INICIALIZADA COM SUCESSO >>>");
 
         } catch (Exception e) {
             logger.error("!!!!!!!! FALHA GRAVE NA INICIALIZAÇÃO DA ONTOLOGY !!!!!!!!", e);
-            baseModel = null;
-            infModel = null;
+            baseModel = null; infModel = null;
         } finally {
             lock.writeLock().unlock();
         }
     }
 
     private void loadRdfData(String resourcePath, Lang language, String description) {
-        // Método mantido como estava
         String cleanPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
         logger.info("   Tentando carregar {} de classpath: {}", description, cleanPath);
-        InputStream in = null;
-        try {
-            in = Ontology.class.getResourceAsStream(cleanPath);
+        try (InputStream in = Ontology.class.getResourceAsStream(cleanPath)) {
             if (in == null) {
-                logger.error("   !!!!!!!! ARQUIVO ESSENCIAL '{}' ({}) NÃO ENCONTRADO no classpath (src/main/resources) !!!!!!!!!", cleanPath, description);
-                if (SCHEMA_FILE.equals(cleanPath) || BASE_DATA_FILE.equals(cleanPath)) { // Considera base TTL essencial também
-                    throw new FileNotFoundException("Arquivo RDF essencial não encontrado: " + cleanPath);
-                }
-                return;
+                logger.error("   !!!!!!!! ARQUIVO ESSENCIAL '{}' ({}) NÃO ENCONTRADO no classpath !!!!!!!!!", cleanPath, description);
+                throw new FileNotFoundException("Arquivo RDF essencial não encontrado: " + cleanPath);
             }
             try (InputStream bis = new BufferedInputStream(in)) {
                 RDFDataMgr.read(baseModel, bis, language);
             }
             logger.info("   {} '{}' carregado com sucesso.", description, cleanPath);
         } catch (FileNotFoundException fnfe) {
-            throw new RuntimeException(fnfe);
+            throw new RuntimeException("Falha ao carregar RDF essencial: " + cleanPath, fnfe);
         } catch (JenaException e) {
             logger.error("   Erro de SINTAXE RDF ou Jena ao carregar {} de {}: {}", description, cleanPath, e.getMessage());
-            logger.debug("   Detalhes do erro Jena:", e);
-            //throw new RuntimeException("Erro de sintaxe no arquivo RDF: " + cleanPath, e); // Descomente se quiser parar em erro de sintaxe
         } catch (IOException e) {
             logger.error("   Erro de I/O ao ler {} de {}", description, cleanPath, e);
         } catch (Exception e) {
             logger.error("   Erro INESPERADO ao carregar {} de {}", description, cleanPath, e);
-        } finally {
-            if (in != null) {
-                try { in.close(); } catch (IOException e) { logger.error("   Erro ao fechar InputStream original para {}", cleanPath, e); }
-            }
         }
     }
 
-    private void validateBaseModelLoad(long baseModelSize) {
-        // Método mantido como estava
-        if (baseModelSize == 0) {
-            logger.error("!!!!!!!!!!!!! MODELO BASE ESTÁ VAZIO APÓS CARREGAMENTO! NENHUM DADO FOI CARREGADO. VERIFIQUE OS ARQUIVOS .OWL, .TTL E O PROCESSO DE CARGA DO EXCEL !!!!!!!!!!!!!");
-        } else {
-            boolean hasPregacoes = false;
-            try {
-                // Ajusta para usar o prefixo correto se getResource foi modificado
-                hasPregacoes = baseModel.listSubjectsWithProperty(RDF.type, getResource("Pregao")).hasNext();
-            } catch (Exception e) {
-                logger.error("Erro ao verificar a existência de Pregões no modelo", e);
-            }
+    private void loadInformacoesEmpresas(String resourcePath) {
+        String cleanPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
+        logger.info(">> Iniciando carregamento Informações Empresas de: {}", cleanPath);
+        int rowsProcessed = 0; int errors = 0;
 
-            if (!hasPregacoes && PREGAO_FILES.length > 0) { // Só avisa se deveria ter carregado pregões
-                logger.warn("Modelo base contém {} triplas, mas NENHUM recurso do tipo '{}Pregao' foi encontrado. Verifique o método loadExcelData (caminhos, índices, formato de datas/números) e o conteúdo das planilhas Excel.", baseModelSize, ONT_PREFIX);
-            } else {
-                logger.info("   Validação pós-carga: Modelo base contém {} triplas {}.", baseModelSize, hasPregacoes ? "e instâncias de Pregão foram encontradas" : "(nenhuma instância de Pregão encontrada)");
+        try (InputStream excelFile = Ontology.class.getResourceAsStream(cleanPath)) {
+            if (excelFile == null) {
+                logger.error("   Arquivo Excel de Informações de Empresas '{}' não encontrado. Pulando.", cleanPath);
+                return;
+            }
+            try (Workbook workbook = new XSSFWorkbook(excelFile)) {
+                Sheet sheet = workbook.getSheetAt(0);
+                if (sheet == null) { logger.error("   Planilha 0 não encontrada em '{}'.", cleanPath); return; }
+                logger.info("   ... Processando Planilha '{}' (Última linha física: {})", sheet.getSheetName(), sheet.getLastRowNum());
+
+                // *** AJUSTE ESTES ÍNDICES CONFORME SEU Informacoes_Empresas.xlsx ***
+                // Empresa Capital Aberto - Coluna A (índice 0)
+                // Codigo Negociacao - Coluna B (índice 1)
+                // Setor_Atuacao - Coluna C (índice 2)
+                // Setor_Atuacao1 - Coluna D (índice 3)
+                // Setor_Atuacao2 - Coluna E (índice 4)
+                // Setor_Atuacao3 - Coluna F (índice 5)
+                final int nomeEmpresaColIdx = 0;
+                final int codigoNegociacaoColIdx = 1;
+                final int setorAtuacao3PrincipalColIdx = 5;
+
+                for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    if (row == null) continue;
+
+                    String nomeEmpresaPlanilha = getStringCellValue(row.getCell(nomeEmpresaColIdx), "NomeEmpresa", i + 1);
+                    String tickerPlanilha = getStringCellValue(row.getCell(codigoNegociacaoColIdx), "CodigoNegociacao", i + 1);
+                    String setorPrincipalPlanilha = getStringCellValue(row.getCell(setorAtuacao3PrincipalColIdx), "SetorAtuacao3Principal", i + 1);
+
+                    if (nomeEmpresaPlanilha == null || nomeEmpresaPlanilha.trim().isEmpty() ||
+                            tickerPlanilha == null || tickerPlanilha.trim().isEmpty() ||
+                            setorPrincipalPlanilha == null || setorPrincipalPlanilha.trim().isEmpty()) {
+                        errors++; continue;
+                    }
+
+                    nomeEmpresaPlanilha = nomeEmpresaPlanilha.trim();
+                    tickerPlanilha = tickerPlanilha.trim().toUpperCase();
+                    setorPrincipalPlanilha = setorPrincipalPlanilha.trim();
+
+                    try {
+                        Resource empresaResource = findOrCreateEmpresaResource(nomeEmpresaPlanilha, tickerPlanilha);
+                        if(empresaResource == null) {
+                            logger.warn("   L{} Pulando: Não foi possível obter/criar recurso para empresa '{}'.", i + 1, nomeEmpresaPlanilha);
+                            errors++; continue;
+                        }
+
+                        addPropertyIfNotExist(empresaResource, RDF.type, getResource("Empresa_Capital_Aberto"));
+                        addPropertyIfNotExist(empresaResource, RDF.type, getResource("Empresa"));
+                        addPropertyIfNotExist(empresaResource, RDFS.label, baseModel.createLiteral(nomeEmpresaPlanilha, "pt"));
+
+                        String setorUriNomeNormalizado = normalizarTextoJava(setorPrincipalPlanilha).replace(" ", "_").replaceAll("[^a-z0-9_]", "");
+                        Resource setorUriResource = baseModel.createResource(ONT_PREFIX + "Setor_" + setorUriNomeNormalizado);
+                        addPropertyIfNotExist(setorUriResource, RDF.type, getResource("Setor_Atuacao"));
+                        addPropertyIfNotExist(setorUriResource, RDFS.label, baseModel.createLiteral(setorPrincipalPlanilha, "pt"));
+
+                        addPropertyIfNotExist(empresaResource, getProperty("atuaEm"), setorUriResource);
+
+                        Resource vmResource = findOrCreateValorMobiliarioResource(tickerPlanilha);
+                        addPropertyIfNotExist(empresaResource, getProperty("temValorMobiliarioNegociado"), vmResource);
+
+                        rowsProcessed++;
+                    } catch (Exception e) {
+                        logger.error("   Erro ao processar linha {} de Informacoes_Empresas (Empresa: {}): {}", i + 1, nomeEmpresaPlanilha, e.getMessage(), e);
+                        errors++;
+                    }
+                }
+                logger.info("<< Informações de Empresas {} carregado. {} linhas processadas, {} erros.", cleanPath, rowsProcessed, errors);
+            }
+        } catch (IOException e) {
+            logger.error("   Erro de I/O ao ABRIR Informacoes_Empresas {}: {}", cleanPath, e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("   Erro inesperado ao processar Informacoes_Empresas {}: {}", cleanPath, e.getMessage(), e);
+        }
+    }
+
+    private Resource findOrCreateEmpresaResource(String nomeEmpresaPlanilha, String tickerPrincipalDaLinha) {
+        String nomeBusca = nomeEmpresaPlanilha;
+        StmtIterator iter = baseModel.listStatements(null, RDFS.label, baseModel.createLiteral(nomeBusca, "pt"));
+        if (iter.hasNext()) {
+            Resource r = iter.nextStatement().getSubject();
+            if (r.isURIResource()) {
+                logger.trace("Reutilizando Empresa pela label '{}': {}", nomeBusca, r.getURI());
+                return r;
+            }
+        }
+        String empresaUriStr = ONT_PREFIX + tickerPrincipalDaLinha.replaceAll("[^A-Za-z0-9]", "") + "_EmpresaEntidade";
+        logger.trace("Criando/reutilizando Empresa com URI: {}", empresaUriStr);
+        return baseModel.createResource(empresaUriStr);
+    }
+
+    // *** MÉTODO normalizarTextoJava CORRIGIDO ***
+    private String normalizarTextoJava(String textoInput) {
+        if (textoInput == null || textoInput.trim().isEmpty()) {
+            return "";
+        }
+        String lower = textoInput.toLowerCase(Locale.ROOT);
+        String nfdNormalizedString = Normalizer.normalize(lower, Normalizer.Form.NFD);
+        Pattern patternDiacritics = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        String semAcentos = patternDiacritics.matcher(nfdNormalizedString).replaceAll("");
+
+        // Remove pontuação e caracteres não alfanuméricos, exceto espaço (que será substituído)
+        String semPontuacaoProblematicas = semAcentos.replaceAll("[^a-z0-9\\s]", "");
+
+        String comUnderscores = semPontuacaoProblematicas.trim().replaceAll("\\s+", "_");
+        return comUnderscores;
+    }
+
+    private void loadDadosPregaoExcel(String resourcePath) {
+        String cleanPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
+        logger.info(">> Iniciando carregamento Pregão de: {}", cleanPath);
+        int rowsProcessed = 0; int errors = 0; int skippedTickerFormat = 0;
+        try (InputStream excelFile = Ontology.class.getResourceAsStream(cleanPath)) {
+            if (excelFile == null) {
+                logger.error("   Arquivo Excel de Pregão '{}' não encontrado. Pulando.", cleanPath); return;
+            }
+            try (Workbook workbook = new XSSFWorkbook(excelFile)) {
+                Sheet sheet = workbook.getSheetAt(0);
+                if (sheet == null) { logger.error("   Planilha 0 não encontrada em '{}'.", cleanPath); return; }
+                logger.info("   ... Processando Planilha '{}' (Última linha física: {})", sheet.getSheetName(), sheet.getLastRowNum());
+
+                SimpleDateFormat rdfDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    if (row == null) continue;
+
+                    // *** AJUSTE ESTES ÍNDICES PARA SEU ARQUIVO DE DADOS DE PREGÃO ***
+                    final int tickerColIdx = 3;      // Col D: CODNEG
+                    final int dataColIdx = 1;        // Col B: DATPRG
+                    final int openPriceColIdx = 7;   // Col H: PREABE
+                    final int highPriceColIdx = 8;   // Col I: PREMAX
+                    final int lowPriceColIdx = 9;    // Col J: PREMIN
+                    final int closePriceColIdx = 11; // Col L: PREULT
+                    final int totalNegociosColIdx = 13;
+                    final int volumeColIdx = 15;
+
+                    String ticker = null; Date dataPregaoDate = null;
+                    try {
+                        ticker = getStringCellValue(row.getCell(tickerColIdx), "Ticker", i + 1);
+                        Cell dataCell = row.getCell(dataColIdx);
+                        if (dataCell != null) {
+                            if (dataCell.getCellType() == CellType.NUMERIC) {
+                                double numDate = dataCell.getNumericCellValue();
+                                if (String.valueOf((long)numDate).matches("^\\d{8}$")) {
+                                    try {
+                                        dataPregaoDate = new SimpleDateFormat("yyyyMMdd").parse(String.valueOf((long)numDate));
+                                    } catch (ParseException e) {
+                                        if (DateUtil.isCellDateFormatted(dataCell)) dataPregaoDate = dataCell.getDateCellValue();
+                                    }
+                                } else if (DateUtil.isCellDateFormatted(dataCell)) {
+                                    dataPregaoDate = dataCell.getDateCellValue();
+                                }
+                            } else if (dataCell.getCellType() == CellType.STRING) {
+                                dataPregaoDate = parseDateFromString(dataCell.getStringCellValue().trim(), "Data", i+1, ticker);
+                            }
+                        }
+
+                        if (ticker == null || !ticker.matches("^[A-Z]{4}\\d{1,2}$")) {
+                            skippedTickerFormat++;
+                            if (skippedTickerFormat <= 10 || skippedTickerFormat % 50 == 0)
+                                logger.warn("   L{} Pulando Ticker: '{}' (Formato inválido ou ausente)", i + 1, ticker);
+                            errors++; continue;
+                        }
+                        ticker = ticker.trim().toUpperCase();
+                        if (dataPregaoDate == null) {
+                            if(errors < 10 || errors % 50 == 0) logger.warn("   L{} Pulando Ticker {}: Data inválida/ausente.", i+1, ticker);
+                            errors++; continue;
+                        }
+
+                        double pAbe = getNumericCellValue(row.getCell(openPriceColIdx), "PrecoAbertura", i + 1, ticker);
+                        double pMax = getNumericCellValue(row.getCell(highPriceColIdx), "PrecoMaximo", i + 1, ticker);
+                        double pMin = getNumericCellValue(row.getCell(lowPriceColIdx), "PrecoMinimo", i + 1, ticker);
+                        double pUlt = getNumericCellValue(row.getCell(closePriceColIdx), "PrecoFechamento", i + 1, ticker);
+                        double totNeg = getNumericCellValue(row.getCell(totalNegociosColIdx), "TotalNegocios", i + 1, ticker);
+                        double volTot = getNumericCellValue(row.getCell(volumeColIdx), "Volume", i + 1, ticker);
+
+                        if (Double.isNaN(pUlt)) { errors++; continue; }
+
+                        String dataFmt = rdfDateFormat.format(dataPregaoDate);
+                        Resource valorMobiliarioResource = findOrCreateValorMobiliarioResource(ticker);
+
+                        String negociadoURI = ONT_PREFIX + "Negociado_" + ticker + "_" + dataFmt.replace("-", "");
+                        Resource negociadoResource = baseModel.createResource(negociadoURI, getResource("Negociado_Em_Pregao"));
+                        Resource pregaoResource = baseModel.createResource(ONT_PREFIX + "Pregao_" + dataFmt.replace("-", ""), getResource("Pregao"));
+
+                        addPropertyIfNotExist(pregaoResource, getProperty("ocorreEmData"), ResourceFactory.createTypedLiteral(dataFmt, XSDDatatype.XSDdate));
+                        addPropertyIfNotExist(valorMobiliarioResource, getProperty("negociado"), negociadoResource);
+                        addPropertyIfNotExist(negociadoResource, getProperty("negociadoDurante"), pregaoResource);
+
+                        addNumericPropertyIfValid(negociadoResource, getProperty("precoAbertura"), pAbe);
+                        addNumericPropertyIfValid(negociadoResource, getProperty("precoMaximo"), pMax);
+                        addNumericPropertyIfValid(negociadoResource, getProperty("precoMinimo"), pMin);
+                        addNumericPropertyIfValid(negociadoResource, getProperty("precoFechamento"), pUlt);
+                        addNumericPropertyIfValid(negociadoResource, getProperty("totalNegocios"), totNeg);
+                        addNumericPropertyIfValid(negociadoResource, getProperty("volumeNegociacao"), volTot);
+
+                        rowsProcessed++;
+                    } catch (Exception e) {
+                        logger.error("   Erro GERAL ao processar linha {} da planilha de pregão '{}' (Ticker: {}): {}",
+                                i + 1, cleanPath, (ticker != null ? ticker : "N/A"), e.getMessage());
+                        errors++;
+                    }
+                }
+                logger.info("<< Pregão {} carregado. {} linhas lidas, {} processadas, {} erros ({} formato ticker).",
+                        cleanPath, sheet.getLastRowNum(), rowsProcessed, errors, skippedTickerFormat);
+            }
+        } catch (IOException e) {
+            logger.error("   Erro de I/O ao ABRIR Excel de Pregão {}", cleanPath, e);
+        } catch (Exception e) {
+            logger.error("   Erro inesperado ao processar Excel de Pregão {}", cleanPath, e);
+        }
+    }
+
+    private Resource findOrCreateValorMobiliarioResource(String ticker) {
+        String vmUriStr = ONT_PREFIX + ticker;
+        Resource vmResource = baseModel.getResource(vmUriStr);
+        boolean existsWithType = baseModel.contains(vmResource, RDF.type, getResource("Valor_Mobiliario"));
+
+        if (!existsWithType) {
+            vmResource = baseModel.createResource(vmUriStr);
+            addPropertyIfNotExist(vmResource, RDF.type, getResource("Valor_Mobiliario"));
+
+            Resource codigoResource = baseModel.createResource(ONT_PREFIX + ticker + "_Codigo");
+            addPropertyIfNotExist(codigoResource, RDF.type, getResource("Codigo_Negociacao"));
+            addPropertyIfNotExist(codigoResource, getProperty("ticker"), baseModel.createLiteral(ticker));
+            addPropertyIfNotExist(vmResource, getProperty("representadoPor"), codigoResource);
+        }
+        return vmResource;
+    }
+
+    private void validateBaseModelLoad(long baseModelSize) {
+        if (baseModelSize == 0) {
+            logger.error("MODELO BASE VAZIO! Verifique arquivos .OWL/.TTL e carga de Excel.");
+        } else {
+            boolean hasPregacoes = baseModel.listSubjectsWithProperty(RDF.type, getResource("Pregao")).hasNext();
+            logger.info("   Validação: Modelo base {} triplas. Pregões encontrados: {}.", baseModelSize, hasPregacoes);
+            if (!hasPregacoes && PREGAO_FILES.length > 0) {
+                logger.warn("   NENHUM recurso do tipo '{}Pregao' encontrado. Verifique loadDadosPregaoExcel.", ONT_PREFIX);
             }
         }
     }
 
     private Reasoner getReasoner() {
-        // Método mantido como estava
-        logger.info("   Usando RDFS Reasoner padrão (ReasonerRegistry.getRDFSReasoner()).");
+        logger.info("   Usando RDFS Reasoner padrão.");
         return ReasonerRegistry.getRDFSReasoner();
     }
 
-    // --- MÉTODO loadExcelData ---
-    // Nenhuma alteração necessária aqui, pois ele recebe o caminho corrigido
-    private void loadExcelData(String resourcePath) {
-        String cleanPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
-        logger.info(">> Iniciando carregamento Pregão de: {}", cleanPath);
-        int rowsProcessed = 0;
-        int errors = 0;
-        int skippedTickerFormat = 0; // Contador específico para formato de ticker
-        InputStream excelFile = null;
-
-        try {
-            excelFile = Ontology.class.getResourceAsStream(cleanPath);
-            if (excelFile == null) {
-                // Este log agora deve ocorrer apenas se o arquivo realmente não existir no local corrigido
-                logger.error("   Arquivo Excel '{}' não encontrado no classpath (verificar src/main/resources{}). Pulando este arquivo.", cleanPath, resourcePath.substring(0,resourcePath.lastIndexOf('/')));
-                return;
-            }
-
-            try (Workbook workbook = new XSSFWorkbook(excelFile)) {
-                Sheet sheet = workbook.getSheetAt(0);
-                if (sheet == null) {
-                    logger.error("   Planilha 0 não encontrada no arquivo Excel '{}'.", cleanPath);
-                    return;
-                }
-                int lastRowNum = sheet.getLastRowNum();
-                logger.info("   ... Processando Planilha '{}' (Última linha física no índice: {})", sheet.getSheetName(), lastRowNum);
-
-                SimpleDateFormat rdfDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-                for (int i = 1; i <= lastRowNum; i++) {
-                    Row row = sheet.getRow(i);
-                    if (row == null) continue;
-
-                    final int tickerColIdx = 4;       // Coluna E
-                    final int dataColIdx = 2;       // Coluna C
-                    final int openPriceColIdx = 8;  // Coluna I
-                    final int highPriceColIdx = 9;  // Coluna J
-                    final int lowPriceColIdx = 10;   // Coluna K
-                    final int closePriceColIdx = 12; // Coluna M
-                    final int quantidadeColIdx = 13; // Coluna N <-- Propriedade: totalNegocios? ou quantidadeNegociada?
-                    final int volumeColIdx = 15;    // Coluna P
-                    final int tipoAcaoColIdx = 16;   // Coluna Q (ON/PN) <-- NOVA COLUNA
-
-                    Cell tickerCell = row.getCell(tickerColIdx);
-                    if (tickerCell == null || tickerCell.getCellType() == CellType.BLANK) continue;
-
-                    String ticker = null;
-                    Date dataPregaoDate = null;
-                    String tipoAcaoStr = null; // Para armazenar ON/PN
-
-                    try {
-                        ticker = getStringCellValue(tickerCell, "Ticker", i + 1);
-                        dataPregaoDate = getDateCellValue(row.getCell(dataColIdx), "Data", i + 1, ticker);
-                        tipoAcaoStr = getStringCellValue(row.getCell(tipoAcaoColIdx), "TipoAcao", i+1); // Lê a coluna Q
-
-                        // Validação formato Ticker (mantida por enquanto)
-                        if (ticker == null || ticker.trim().isEmpty() || !ticker.matches("^[A-Z]{4}\\d{1,2}$")) {
-                            skippedTickerFormat++;
-                            if (ticker != null && !ticker.trim().isEmpty() && skippedTickerFormat <= 5) { // Loga os 5 primeiros avisos
-                                logger.warn("   L{} Pulando: Ticker lido ('{}') não corresponde ao formato esperado AAAA(N)N.", i + 1, ticker);
-                            } else if (skippedTickerFormat > 5 && skippedTickerFormat % 100 == 0) { // Loga a cada 100 depois
-                                logger.warn("   (L{}...) {} tickers pulados devido a formato inválido até agora...", i + 1, skippedTickerFormat);
-                            }
-                            errors++; continue;
-                        }
-                        ticker = ticker.trim().toUpperCase();
-
-                        if (dataPregaoDate == null) {
-                            logger.warn("   L{} Pulando: Data inválida para ticker '{}'.", i + 1, ticker);
-                            errors++; continue;
-                        }
-
-                        double precoAbertura = getNumericCellValue(row.getCell(openPriceColIdx), "PrecoAbertura", i + 1, ticker);
-                        double precoMaximo = getNumericCellValue(row.getCell(highPriceColIdx), "PrecoMaximo", i + 1, ticker);
-                        double precoMinimo = getNumericCellValue(row.getCell(lowPriceColIdx), "PrecoMinimo", i + 1, ticker);
-                        double precoFechamento = getNumericCellValue(row.getCell(closePriceColIdx), "PrecoFechamento", i + 1, ticker);
-                        // ** Mapeando Coluna N para totalNegocios (ajustar se semântica for outra) **
-                        double totalNegocios = getNumericCellValue(row.getCell(quantidadeColIdx), "TotalNegocios", i + 1, ticker);
-                        double volumeTotal = getNumericCellValue(row.getCell(volumeColIdx), "Volume", i + 1, ticker);
-
-                        if (Double.isNaN(precoAbertura) && Double.isNaN(precoMaximo) && Double.isNaN(precoMinimo) &&
-                                Double.isNaN(precoFechamento) && Double.isNaN(totalNegocios) && Double.isNaN(volumeTotal)) {
-                            logger.warn("   L{} Pulando: Nenhum dado numérico válido para ticker '{}' na data {}.", i + 1, ticker, dataPregaoDate);
-                            errors++; continue;
-                        }
-
-                        String dataFormatada = rdfDateFormat.format(dataPregaoDate);
-                        String valorMobiliarioURI = ONT_PREFIX + ticker;
-                        // ** Ajuste URI Negociado para incluir tipo de ação se existir? Ou adicionar tipo no ValorMobiliario **
-                        String negociadoURI = ONT_PREFIX + "Negociado_" + ticker + "_" + dataFormatada;
-                        String pregaoURI = ONT_PREFIX + "Pregao_" + dataFormatada;
-
-                        // Usa getResource e getProperty com o prefixo 'stock' definido no modelo
-                        Resource valorMobiliario = baseModel.createResource(valorMobiliarioURI);
-                        Resource negociado = baseModel.createResource(negociadoURI, getResource("Negociado_Em_Pregao"));
-                        Resource pregao = baseModel.createResource(pregaoURI, getResource("Pregao"));
-
-                        // Adiciona tipo genérico Valor_Mobiliario OU tipo específico (ON/PN)
-                        Resource tipoAcaoResource = getResource("Valor_Mobiliario"); // Padrão
-                        if (tipoAcaoStr != null) {
-                            if ("ON".equalsIgnoreCase(tipoAcaoStr.trim())) {
-                                tipoAcaoResource = getResource("Ordinaria");
-                            } else if ("PN".equalsIgnoreCase(tipoAcaoStr.trim())) {
-                                tipoAcaoResource = getResource("Preferencial");
-                            } // Adicionar mais 'else if' para outros tipos (UNIT, etc.) se necessário
-                            else {
-                                logger.trace("   L{} Tipo de ação '{}' não reconhecido para ticker {}. Usando tipo genérico.", i + 1, tipoAcaoStr, ticker);
-                            }
-                        }
-                        addPropertyIfNotExist(valorMobiliario, RDF.type, tipoAcaoResource); // Adiciona o tipo específico ou genérico
-                        addPropertyIfNotExist(valorMobiliario, getProperty("ticker"), ticker); // Adiciona ticker se não existir
-
-                        addPropertyIfNotExist(pregao, getProperty("ocorreEmData"), ResourceFactory.createTypedLiteral(dataFormatada, XSDDatatype.XSDdate));
-
-                        // Adiciona propriedades de dados ao recurso 'negociado'
-                        addNumericPropertyIfValid(negociado, getProperty("precoAbertura"), precoAbertura);
-                        addNumericPropertyIfValid(negociado, getProperty("precoMaximo"), precoMaximo);
-                        addNumericPropertyIfValid(negociado, getProperty("precoMinimo"), precoMinimo);
-                        addNumericPropertyIfValid(negociado, getProperty("precoFechamento"), precoFechamento);
-                        addNumericPropertyIfValid(negociado, getProperty("totalNegocios"), totalNegocios); // Mapeado para totalNegocios
-                        addNumericPropertyIfValid(negociado, getProperty("volumeNegociacao"), volumeTotal);
-
-                        // Adiciona relações
-                        addPropertyIfNotExist(negociado, getProperty("negociadoDurante"), pregao);
-                        addPropertyIfNotExist(valorMobiliario, getProperty("negociado"), negociado);
-
-                        rowsProcessed++;
-
-                    } catch (Exception e) {
-                        logger.error("   Erro GERAL ao processar linha {} da planilha '{}' (Ticker: {}, Data lida: {}): {}",
-                                i + 1, cleanPath, ticker != null ? ticker : "N/A", (dataPregaoDate != null ? dataPregaoDate : "N/A"), e.getMessage(), e);
-                        errors++;
-                    }
-                }
-
-                // Log final por arquivo
-                logger.info("<< Pregão {} carregado. {} linhas da planilha lidas, {} linhas processadas com sucesso, {} erros/puladas ({} formato ticker inválido).",
-                        cleanPath, sheet.getLastRowNum(), rowsProcessed, errors, skippedTickerFormat);
-                if (rowsProcessed == 0 && sheet.getLastRowNum() > 0) {
-                    logger.error("!!!!!!!! NENHUMA LINHA PROCESSADA COM SUCESSO EM '{}'. VERIFICAR LOGS !!!!!!!!!!", cleanPath);
-                }
-
-            }
-
-        } catch (IOException e) {
-            logger.error("   Erro de I/O ao ABRIR ou LER arquivo Excel {}", cleanPath, e);
-        } catch (InvalidPathException ipe) {
-            logger.error("   Caminho inválido para o arquivo Excel {}", cleanPath, ipe);
-        } catch (Exception e) {
-            logger.error("   Erro inesperado ao processar Excel {}", cleanPath, e);
-        } finally {
-            if (excelFile != null) {
-                try { excelFile.close(); } catch (IOException e) { logger.error("   Erro ao fechar InputStream do Excel {}", cleanPath, e); }
-            }
-        }
-    }
-
-    // --- Métodos Helper (getStringCellValue, getDateCellValue, etc.) ---
-    // Mantidos como estavam, mas adicionada leitura da coluna TipoAcao e
-    // ajuste no mapeamento da coluna de Quantidade para a propriedade totalNegocios.
-    // ... (Colar aqui os métodos helper da sua versão anterior,
-    //      certificando-se que getResource e getProperty usam ONT_PREFIX) ...
-
-    /** Lê o valor de uma célula como String, com tratamento de tipos comuns. */
-    private String getStringCellValue(Cell cell, String colName, int rowNum) {
-        if (cell == null || cell.getCellType() == CellType.BLANK) return null;
-        try {
-            CellType cellType = cell.getCellType();
-            if (cellType == CellType.FORMULA) cellType = cell.getCachedFormulaResultType();
-            switch (cellType) {
-                case STRING: String val = cell.getStringCellValue(); return (val != null) ? val.trim() : null;
-                case NUMERIC: double numVal = cell.getNumericCellValue(); return (numVal == Math.floor(numVal) && !Double.isInfinite(numVal)) ? String.valueOf((long) numVal) : String.valueOf(numVal);
-                case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
-                default: logger.warn("   L{} Col '{}': Tipo {} não esperado para String.", rowNum, colName, cellType); return null;
-            }
-        } catch (Exception e) { logger.error("   L{} Col '{}': Erro ao ler String: {}", rowNum, colName, e.getMessage()); return null; }
-    }
-
-    /** Lê o valor de uma célula como Data, tentando múltiplos formatos. */
-    private Date getDateCellValue(Cell cell, String colName, int rowNum, String tickerContext) {
-        if (cell == null || cell.getCellType() == CellType.BLANK) return null;
-        try {
-            CellType cellType = cell.getCellType();
-            if (cellType == CellType.FORMULA) cellType = cell.getCachedFormulaResultType();
-            if (cellType == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) return cell.getDateCellValue();
-            if (cellType == CellType.NUMERIC) {
-                double numVal = cell.getNumericCellValue();
-                if (DateUtil.isValidExcelDate(numVal)) return DateUtil.getJavaDate(numVal);
-                if (numVal > 20000000 && numVal < 22000000 && numVal == Math.floor(numVal)) { // Heurística YYYYMMDD
-                    try { SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd"); fmt.setLenient(false); return fmt.parse(String.valueOf((long) numVal)); } catch (ParseException pe) {}
-                }
-                return parseDateFromString((numVal == Math.floor(numVal)) ? String.valueOf((long)numVal) : String.valueOf(numVal), colName, rowNum, tickerContext);
-            }
-            if (cellType == CellType.STRING) return parseDateFromString(cell.getStringCellValue().trim(), colName, rowNum, tickerContext);
-            logger.warn("   L{} '{}' ({}): Tipo {} inesperado para Data.", rowNum, colName, tickerContext, cellType); return null;
-        } catch (Exception e) { logger.error("   L{} '{}' ({}): Erro ao ler Data: {}", rowNum, colName, tickerContext, e.getMessage(), e); return null; }
-    }
-
-    /** Tenta parsear uma string de data usando formatos comuns. */
-    private Date parseDateFromString(String dateStr, String colName, int rowNum, String tickerContext) {
-        if (dateStr == null || dateStr.isEmpty()) return null;
-        SimpleDateFormat[] formats = {
-                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"), new SimpleDateFormat("dd/MM/yyyy HH:mm:ss"),
-                new SimpleDateFormat("yyyy-MM-dd"), new SimpleDateFormat("dd/MM/yyyy"), new SimpleDateFormat("yyyyMMdd"),
-                new SimpleDateFormat("MM/dd/yy", Locale.US), new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH)
-        };
-        for (SimpleDateFormat fmt : formats) {
-            try { fmt.setLenient(false); return fmt.parse(dateStr); } catch (ParseException pe) {}
-        }
-        logger.warn("   L{} '{}' ({}): Impossível parsear data da string '{}'.", rowNum, colName, tickerContext, dateStr); return null;
-    }
-
-    /** Lê o valor de uma célula como double, com tratamento de erros e limpeza. */
-    private double getNumericCellValue(Cell cell, String colName, int rowNum, String tickerContext) {
-        if (cell == null || cell.getCellType() == CellType.BLANK) return Double.NaN;
-        try {
-            CellType cellType = cell.getCellType();
-            if (cellType == CellType.FORMULA) cellType = cell.getCachedFormulaResultType();
-            switch (cellType) {
-                case NUMERIC: return DateUtil.isCellDateFormatted(cell) ? Double.NaN : cell.getNumericCellValue(); // Evita ler datas como números
-                case STRING:
-                    String val = cell.getStringCellValue().trim();
-                    if (val.isEmpty() || val.equals("-") || val.equalsIgnoreCase("N/A")) return Double.NaN;
-                    try { return Double.parseDouble(val.replace("R$", "").replace("%", "").replace(".", "").replace(",", ".").trim()); }
-                    catch (NumberFormatException e) { logger.warn("   L{} '{}' ({}): String '{}' não é número.", rowNum, colName, tickerContext, cell.getStringCellValue()); return Double.NaN; }
-                default: logger.warn("   L{} '{}' ({}): Tipo {} inesperado para Numérico.", rowNum, colName, tickerContext, cellType); return Double.NaN;
-            }
-        } catch (Exception e) { logger.error("   L{} '{}' ({}): Erro ao ler Numérico: {}", rowNum, colName, tickerContext, e.getMessage()); return Double.NaN; }
-    }
-
-    /** Helper para criar URI de Property usando o prefixo da ontologia. */
-    private Property getProperty(String localName) {
-        if (localName == null || localName.trim().isEmpty()) return null; // Retorna null se inválido
-        return ResourceFactory.createProperty(ONT_PREFIX + localName.trim());
-    }
-
-    /** Helper para criar URI de Resource (Classe) usando o prefixo da ontologia. */
-    private Resource getResource(String localName) {
-        if (localName == null || localName.trim().isEmpty()) return null; // Retorna null se inválido
-        return ResourceFactory.createResource(ONT_PREFIX + localName.trim());
-    }
-
-    /** Adiciona uma propriedade de objeto se ela ainda não existir. */
-    private void addPropertyIfNotExist(Resource subject, Property predicate, RDFNode object) {
-        if (subject != null && predicate != null && object != null && !baseModel.contains(subject, predicate, object)) {
-            subject.addProperty(predicate, object);
-        }
-    }
-
-    /** Adiciona uma propriedade literal (String) se ela ainda não existir. */
-    private void addPropertyIfNotExist(Resource subject, Property predicate, String literalValue) {
-        if (subject != null && predicate != null && literalValue != null && !literalValue.isEmpty() && !baseModel.contains(subject, predicate, literalValue)) {
-            subject.addProperty(predicate, literalValue);
-        }
-    }
-
-    /** Adiciona uma propriedade literal com tipo de dado se ela ainda não existir. */
-    private void addPropertyIfNotExist(Resource subject, Property predicate, Literal typedLiteral) {
-        if (subject != null && predicate != null && typedLiteral != null && !baseModel.contains(subject, predicate, typedLiteral)) {
-            subject.addProperty(predicate, typedLiteral);
-        }
-    }
-
-    /** Adiciona uma propriedade numérica (double) se o valor for válido (não NaN). */
-    private void addNumericPropertyIfValid(Resource subject, Property predicate, double value) {
-        if (subject != null && predicate != null && !Double.isNaN(value)) {
-            Literal literal = baseModel.createTypedLiteral(value);
-            subject.addProperty(predicate, literal);
-        }
-    }
-
-    /** Salva o modelo inferido em arquivo Turtle. */
     private void saveInferredModel() {
-        // Método mantido como estava
         logger.info("--- Tentando salvar modelo RDF inferido em {}...", INFERENCE_OUTPUT_FILE);
-        Path outputPath = null;
         try {
-            Path projectDir = Paths.get(".").toAbsolutePath().normalize();
-            outputPath = projectDir.resolve(INFERENCE_OUTPUT_FILE);
+            Path outputPath = Paths.get(".").toAbsolutePath().normalize().resolve(INFERENCE_OUTPUT_FILE);
             logger.info("   Caminho absoluto para salvar: {}", outputPath);
             if (infModel != null && infModel.size() > 0) {
                 Path parentDir = outputPath.getParent();
-                if (parentDir != null && !Files.exists(parentDir)) {
-                    try { Files.createDirectories(parentDir); } catch (IOException eCreate) { logger.error("   Falha ao criar diretório pai {}.", parentDir, eCreate); return; }
-                }
+                if (parentDir != null && !Files.exists(parentDir)) Files.createDirectories(parentDir);
                 logger.info("   Salvando {} triplas inferidas...", infModel.size());
-                try (OutputStream fos = new BufferedOutputStream(new FileOutputStream(outputPath.toFile()))) {
+                try (OutputStream fos = new BufferedOutputStream(Files.newOutputStream(outputPath))) {
                     RDFDataMgr.write(fos, infModel, Lang.TURTLE);
                     logger.info("   Modelo RDF inferido salvo com sucesso em {}", outputPath);
-                } catch (IOException | JenaException e) { logger.error("   Erro ao ESCREVER o modelo RDF inferido no arquivo {}.", outputPath, e); }
+                }
             } else { logger.warn("   Modelo inferido nulo ou vazio. Nada para salvar."); }
-        } catch(InvalidPathException ipe) { logger.error("   Caminho de saída '{}' é inválido.", INFERENCE_OUTPUT_FILE, ipe);
-        } catch (Exception e) { logger.error("   Erro inesperado durante salvamento do modelo inferido.", e); }
+        } catch(Exception e) { logger.error("   Erro ao salvar modelo inferido.", e); }
     }
 
-    /**
-     * Executa uma consulta SPARQL SELECT no modelo inferido.
-     * Retorna uma lista de strings com os valores da variável alvo.
-     * Retorna null em caso de erro grave (sintaxe, execução).
-     */
     public List<String> executeQuery(String sparqlQuery, String targetVariable) {
-        // Método mantido como estava
         lock.readLock().lock();
         try {
             if (infModel == null) { logger.error("ERRO: Modelo de inferência não inicializado."); return null; }
@@ -485,7 +408,6 @@ public class Ontology {
                 query = QueryFactory.create(sparqlQuery);
             } catch (QueryParseException e) {
                 logger.error("   ERRO DE SINTAXE na query SPARQL: {}", e.getMessage());
-                logger.error("   Detalhes do erro: Linha {}, Coluna {}", e.getLine(), e.getColumn());
                 logger.error("   Query com erro:\n---\n{}\n---", sparqlQuery);
                 return null;
             }
@@ -499,7 +421,12 @@ public class Ontology {
                         else if (node.isResource()) results.add(node.asResource().getURI());
                         else results.add(node.toString());
                     } else {
-                        logger.warn("    Variável alvo '{}' não encontrada na solução atual: {}", targetVariable, soln);
+                        StringJoiner sj = new StringJoiner(", ", "( ", " )");
+                        rs.getResultVars().forEach(varName -> {
+                            RDFNode valNode = soln.get(varName);
+                            if (valNode != null) sj.add("? " + varName + " = \"" + valNode.toString() + "\"");
+                        });
+                        logger.warn("    Variável alvo '{}' não encontrada na solução atual: {}", targetVariable, sj.toString());
                     }
                 }
                 logger.debug("   Iteração concluída. {} resultado(s) encontrado(s) para '{}'.", results.size(), targetVariable);
@@ -510,4 +437,102 @@ public class Ontology {
         }
     }
 
-} // Fim da classe Ontology
+    private String getStringCellValue(Cell cell, String colName, int rowNum) {
+        if (cell == null) return null;
+        CellType cellTypeToTest = cell.getCellType();
+        if (cellTypeToTest == CellType.FORMULA) cellTypeToTest = cell.getCachedFormulaResultType();
+
+        switch (cellTypeToTest) {
+            case STRING: return cell.getStringCellValue().trim();
+            case NUMERIC: return String.valueOf(cell.getNumericCellValue());
+            case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
+            case BLANK: return null;
+            default: logger.warn("L{} Col '{}': Tipo {} não tratado para String.", rowNum, colName, cellTypeToTest); return null;
+        }
+    }
+
+    private Date getDateCellValue(Cell cell, String colName, int rowNum, String tickerContext) {
+        if (cell == null || cell.getCellType() == CellType.BLANK) return null;
+        try {
+            if (cell.getCellType() == CellType.NUMERIC) {
+                if (DateUtil.isCellDateFormatted(cell)) return cell.getDateCellValue();
+                double numVal = cell.getNumericCellValue();
+                if (String.valueOf((long)numVal).matches("^\\d{8}$")) {
+                    try { return new SimpleDateFormat("yyyyMMdd").parse(String.valueOf((long)numVal)); }
+                    catch (ParseException pe) { /* Ignora e tenta outros formatos */ }
+                }
+            } else if (cell.getCellType() == CellType.STRING) {
+                return parseDateFromString(cell.getStringCellValue().trim(), colName, rowNum, tickerContext);
+            }
+            logger.warn("   L{} '{}' ({}): Tipo {} não é data válida.", rowNum, colName, tickerContext, cell.getCellType());
+            return null;
+        } catch (Exception e) {
+            logger.warn("   L{} '{}' ({}): Erro ao ler/parsear Data: {}", rowNum, colName, tickerContext, e.getMessage());
+            return null;
+        }
+    }
+
+    private Date parseDateFromString(String dateStr, String colName, int rowNum, String tickerContext) {
+        if (dateStr == null || dateStr.isEmpty()) return null;
+        SimpleDateFormat[] formats = {
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"), new SimpleDateFormat("dd/MM/yyyy HH:mm:ss"),
+                new SimpleDateFormat("yyyy-MM-dd"), new SimpleDateFormat("dd/MM/yyyy"),
+                new SimpleDateFormat("yyyyMMdd"), new SimpleDateFormat("MM/dd/yy", Locale.US)
+        };
+        for (SimpleDateFormat fmt : formats) {
+            try { fmt.setLenient(false); return fmt.parse(dateStr); } catch (ParseException ignored) {}
+        }
+        logger.warn("   L{} '{}' ({}): Impossível parsear data da string '{}'.", rowNum, colName, tickerContext, dateStr); return null;
+    }
+
+    private double getNumericCellValue(Cell cell, String colName, int rowNum, String tickerContext) {
+        if (cell == null || cell.getCellType() == CellType.BLANK) return Double.NaN;
+        try {
+            CellType cellType = cell.getCellType();
+            if (cellType == CellType.FORMULA) cellType = cell.getCachedFormulaResultType();
+            if (cellType == CellType.NUMERIC) {
+                return cell.getNumericCellValue();
+            } else if (cellType == CellType.STRING) {
+                String val = cell.getStringCellValue().trim();
+                if (val.isEmpty() || val.equals("-") || val.equalsIgnoreCase("N/A")) return Double.NaN;
+                try { return Double.parseDouble(val.replace("R$", "").replace("%", "").replace(".", "").replace(",", ".").trim()); }
+                catch (NumberFormatException e) { return Double.NaN; }
+            }
+            return Double.NaN;
+        } catch (Exception e) { return Double.NaN; }
+    }
+
+    private Property getProperty(String localName) {
+        if (localName == null || localName.trim().isEmpty()) {
+            logger.error("Tentativa de criar Property com nome local nulo ou vazio.");
+            return ResourceFactory.createProperty(ONT_PREFIX + "ERRO_NOME_PROPRIEDADE_VAZIO");
+        }
+        return ResourceFactory.createProperty(ONT_PREFIX + localName.trim());
+    }
+    private Resource getResource(String localName) {
+        if (localName == null || localName.trim().isEmpty()) {
+            logger.error("Tentativa de criar Resource com nome local nulo ou vazio.");
+            return ResourceFactory.createResource(ONT_PREFIX + "ERRO_NOME_RECURSO_VAZIO");
+        }
+        return ResourceFactory.createResource(ONT_PREFIX + localName.trim());
+    }
+
+    private void addPropertyIfNotExist(Resource subject, Property predicate, RDFNode object) {
+        if (subject != null && predicate != null && object != null) {
+            if (!baseModel.contains(subject, predicate, object)) {
+                baseModel.add(subject, predicate, object);
+            }
+        } else {
+            logger.warn("Tentativa de adicionar tripla com sujeito, predicado ou objeto nulo: S:{} P:{} O:{}",
+                    (subject != null ? subject.getURI() : "null"),
+                    (predicate != null ? predicate.getURI() : "null"),
+                    object);
+        }
+    }
+
+    private void addNumericPropertyIfValid(Resource subject, Property predicate, double value) {
+        if (subject != null && predicate != null && !Double.isNaN(value)) {
+            baseModel.add(subject, predicate, baseModel.createTypedLiteral(value));
+        }
+    }
+}

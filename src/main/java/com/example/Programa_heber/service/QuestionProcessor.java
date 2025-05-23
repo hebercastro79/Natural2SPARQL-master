@@ -15,10 +15,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,291 +40,307 @@ public class QuestionProcessor {
 
     @PostConstruct
     public void initialize() {
+        logger.info("Iniciando QuestionProcessor (@PostConstruct)...");
         try {
-            Resource resource = new ClassPathResource(PYTHON_SCRIPT_NAME);
-            if (resource.exists()) {
-                if (resource.isFile() && resource.getURI().getScheme().equals("file")) {
-                    pythonScriptPath = Paths.get(resource.getURI());
-                    logger.info("Script Python encontrado diretamente em: {}", pythonScriptPath);
-                } else {
-                    Path tempDir = Files.createTempDirectory("pyscripts_");
-                    pythonScriptPath = tempDir.resolve(PYTHON_SCRIPT_NAME);
-                    try (InputStream is = resource.getInputStream()) {
-                        Files.copy(is, pythonScriptPath);
-                        logger.info("Script Python extraído do JAR para: {}", pythonScriptPath);
-                    }
-                    try {
-                        if (!pythonScriptPath.toFile().setExecutable(true)) {
-                            logger.warn("Não foi possível marcar o script Python temporário como executável: {}", pythonScriptPath);
-                        }
-                    } catch (SecurityException se) {
-                        logger.warn("Não foi possível marcar o script Python temporário como executável devido a restrições de segurança: {}", se.getMessage());
-                    }
-                    pythonScriptPath.toFile().deleteOnExit();
-                    tempDir.toFile().deleteOnExit();
-                }
-            } else {
-                logger.error("Script Python '{}' não encontrado no classpath.", PYTHON_SCRIPT_NAME);
-                throw new FileNotFoundException("Script Python não encontrado: " + PYTHON_SCRIPT_NAME);
+            Resource resource = new ClassPathResource("scripts/" + PYTHON_SCRIPT_NAME);
+            if (!resource.exists()) {
+                logger.warn("Script Python '{}' não encontrado em 'resources/scripts/'. Tentando na raiz de 'resources'.", PYTHON_SCRIPT_NAME);
+                resource = new ClassPathResource(PYTHON_SCRIPT_NAME);
             }
-            logger.info("QuestionProcessor inicializado. Instância de Ontology injetada: OK");
+
+            if (!resource.exists()) {
+                logger.error("CRÍTICO: Script Python '{}' não encontrado no classpath. O processamento de perguntas falhará.", PYTHON_SCRIPT_NAME);
+                throw new FileNotFoundException("Script Python essencial não encontrado: " + PYTHON_SCRIPT_NAME);
+            }
+
+            String resourceURIPath = resource.getURI().toString();
+            if (resourceURIPath.startsWith("jar:")) {
+                Path tempDir = Files.createTempDirectory("pyscripts_temp_");
+                tempDir.toFile().deleteOnExit();
+                this.pythonScriptPath = tempDir.resolve(PYTHON_SCRIPT_NAME);
+                try (InputStream inputStream = resource.getInputStream()) {
+                    Files.copy(inputStream, this.pythonScriptPath);
+                }
+                boolean executableSet = this.pythonScriptPath.toFile().setExecutable(true, false);
+                if (executableSet) {
+                    logger.info("Script Python '{}' extraído para path temporário e marcado como executável: {}", PYTHON_SCRIPT_NAME, this.pythonScriptPath);
+                } else {
+                    logger.warn("Não foi possível marcar o script Python temporário ({}) como executável.", this.pythonScriptPath);
+                }
+                this.pythonScriptPath.toFile().deleteOnExit();
+            } else {
+                this.pythonScriptPath = Paths.get(resource.getURI());
+                logger.info("Script Python '{}' encontrado diretamente no sistema de arquivos: {}", PYTHON_SCRIPT_NAME, this.pythonScriptPath);
+                if (!Files.isExecutable(this.pythonScriptPath)) {
+                    if(!this.pythonScriptPath.toFile().setExecutable(true, false)){
+                        logger.error("Falha ao marcar script Python {} como executável.", this.pythonScriptPath);
+                    } else {
+                        logger.info("Script Python {} marcado como executável.", this.pythonScriptPath);
+                    }
+                }
+            }
         } catch (IOException e) {
-            logger.error("Erro fatal ao inicializar QuestionProcessor ou localizar/preparar script Python: {}", e.getMessage(), e);
-            throw new RuntimeException("Falha crítica ao inicializar QuestionProcessor: não foi possível preparar o script Python.", e);
+            logger.error("CRÍTICO: Erro de IO ao inicializar QuestionProcessor/preparar script Python: {}. Processamento indisponível.", e.getMessage(), e);
+            this.pythonScriptPath = null;
+        } catch (Exception eAll) {
+            logger.error("CRÍTICO: Erro inesperado durante a inicialização do QuestionProcessor: {}. ", eAll.getMessage(), eAll);
+            this.pythonScriptPath = null;
         }
-        logger.info("QuestionProcessor @PostConstruct: Serviço pronto.");
+        logger.info("QuestionProcessor @PostConstruct: Finalizado. Path do script Python: {}", (this.pythonScriptPath != null ? this.pythonScriptPath.toString() : "NÃO CONFIGURADO/ERRO"));
     }
 
     public ProcessamentoDetalhadoResposta processQuestion(String question) {
-        logger.info("Serviço: Processando pergunta: '{}'", question);
+        logger.info("Serviço QuestionProcessor: Iniciando processamento da pergunta: '{}'", question);
         ProcessamentoDetalhadoResposta respostaDetalhada = new ProcessamentoDetalhadoResposta();
-        String finalQuery = "N/A - Query não gerada devido a erro anterior.";
+        String sparqlQueryGerada = "N/A - Query não gerada.";
+
+        if (this.pythonScriptPath == null || !Files.exists(this.pythonScriptPath)) {
+            logger.error("Erro Crítico: Script Python não está configurado ou não existe ({}).", this.pythonScriptPath);
+            respostaDetalhada.setErro("Erro crítico interno: Componente de processamento de linguagem não está disponível.");
+            respostaDetalhada.setSparqlQuery(sparqlQueryGerada);
+            return respostaDetalhada;
+        }
 
         try {
-            Map<String, Object> pythonResult = executePythonScript(question);
+            Map<String, Object> resultadoPython = executePythonScript(question);
+            ObjectMapper objectMapper = new ObjectMapper();
 
-            if (pythonResult == null || !pythonResult.containsKey("template_nome") || !pythonResult.containsKey("mapeamentos")) {
-                logger.error("Resultado inválido ou incompleto do script Python. Resultado: {}", pythonResult);
-                respostaDetalhada.setErro("Erro: Falha ao interpretar a resposta do processador de linguagem.");
-                respostaDetalhada.setSparqlQuery(finalQuery);
+            String templateId = (String) resultadoPython.get("template_nome");
+            @SuppressWarnings("unchecked")
+            Map<String, String> placeholders = (Map<String, String>) resultadoPython.get("mapeamentos");
+
+            if (resultadoPython.containsKey("_debug_info") && resultadoPython.get("_debug_info") != null) {
+                Object debugInfoObj = resultadoPython.get("_debug_info");
+                String debugInfoStr = (debugInfoObj instanceof String) ? (String) debugInfoObj : objectMapper.writeValueAsString(debugInfoObj);
+                logger.info("Debug Info do Python: {}", debugInfoStr);
+                respostaDetalhada.setDebugInfo(debugInfoStr);
+            }
+
+            if (resultadoPython.containsKey("erro") && resultadoPython.get("erro") != null) {
+                String erroPython = String.valueOf(resultadoPython.get("erro"));
+                logger.error("Script Python retornou erro lógico: '{}'. Pergunta: '{}'", erroPython, question);
+                respostaDetalhada.setErro("Falha no processamento da linguagem: " + erroPython);
                 return respostaDetalhada;
             }
 
-            String templateId = (String) pythonResult.get("template_nome");
-            @SuppressWarnings("unchecked")
-            Map<String, String> placeholders = (Map<String, String>) pythonResult.get("mapeamentos");
-
-            if (pythonResult.containsKey("_debug_info")) {
-                logger.debug("Informações de debug do Python: {}", pythonResult.get("_debug_info"));
-            }
-
-            if (templateId == null || templateId.isEmpty()) {
-                logger.warn("Script Python não retornou um ID de template válido ('template_nome').");
-                respostaDetalhada.setErro("Não foi possível determinar o tipo da pergunta.");
-                respostaDetalhada.setSparqlQuery(finalQuery);
+            if (templateId == null || templateId.trim().isEmpty()) {
+                logger.error("Python não retornou 'template_nome' válido. Pergunta: '{}'", question);
+                respostaDetalhada.setErro("Não foi possível determinar o tipo da pergunta (template não identificado).");
                 return respostaDetalhada;
             }
             if (placeholders == null) {
-                logger.error("Script Python não retornou um mapa de placeholders válido ('mapeamentos').");
-                respostaDetalhada.setErro("Erro: Falha ao obter os detalhes da pergunta do processador de linguagem.");
-                respostaDetalhada.setSparqlQuery(finalQuery);
+                logger.error("Python não retornou 'mapeamentos' válidos (null) para template '{}'. Pergunta: '{}'", templateId, question);
+                respostaDetalhada.setErro("Erro interno: Falha ao obter detalhes da pergunta do processador de linguagem.");
                 return respostaDetalhada;
             }
 
-            String templateContent = readTemplateContent(templateId);
-            if (templateContent == null || templateContent.isEmpty()) {
-                logger.error("Não foi possível ler o conteúdo do template: {}", templateId);
-                respostaDetalhada.setErro("Erro interno: Template SPARQL não encontrado ou vazio.");
-                respostaDetalhada.setSparqlQuery(finalQuery);
-                return respostaDetalhada;
-            }
+            logger.info("Python para pergunta '{}': Template ID='{}', Placeholders={}", question, templateId, placeholders);
 
-            finalQuery = buildSparqlQuery(templateContent, placeholders, templateId);
-            respostaDetalhada.setSparqlQuery(finalQuery);
-            logger.info("SPARQL Final Gerada:\n---\n{}\n---", finalQuery);
+            String conteudoTemplate = readTemplateContent(templateId);
+            sparqlQueryGerada = buildSparqlQuery(conteudoTemplate, placeholders, templateId);
+            respostaDetalhada.setSparqlQuery(sparqlQueryGerada);
+            logger.info("SPARQL Gerada para template '{}':\n---\n{}\n---", templateId, sparqlQueryGerada);
 
-            String targetVariable = "valor";
+            String variavelAlvoSparql = "valor";
+            // *** CORREÇÃO PARA Template 2A ***
             if ("Template 2A".equals(templateId)) {
-                targetVariable = "individualTicker";
+                variavelAlvoSparql = "individualTicker";
+                logger.debug("Template 2A: Usando variável alvo '{}'", variavelAlvoSparql);
+            }
+            // Para Template 3A e outros que usam ?valor, o padrão está OK.
+
+            List<String> listaResultados = ontology.executeQuery(sparqlQueryGerada, variavelAlvoSparql);
+
+            if (listaResultados == null) {
+                logger.error("Ontology.executeQuery retornou null. Query: {}", sparqlQueryGerada);
+                respostaDetalhada.setErro("Erro ao executar a consulta na base de conhecimento.");
+                listaResultados = new ArrayList<>();
             }
 
-            logger.info("Executando consulta SPARQL para template '{}' com variável alvo '{}'", templateId, targetVariable);
-            List<String> resultsList = ontology.executeQuery(finalQuery, targetVariable);
-
-            if (resultsList == null) {
-                logger.error("Execução da query SPARQL (via Ontology.executeQuery) retornou null. Query: {}", finalQuery);
-                respostaDetalhada.setErro("Erro ao executar a consulta SPARQL na base de conhecimento.");
-            } else if (resultsList.isEmpty()) {
+            if (listaResultados.isEmpty()) {
                 logger.info("Nenhum resultado encontrado para a consulta SPARQL.");
                 respostaDetalhada.setResposta("Não foram encontrados resultados que correspondam à sua pergunta.");
             } else {
-                StringJoiner joiner = new StringJoiner(", ");
-                resultsList.forEach(result -> {
-                    String cleanResult = result.replace(BASE_ONTOLOGY_URI, "b3:");
-                    cleanResult = cleanResult.replace("http://www.w3.org/2000/01/rdf-schema#", "rdfs:");
-                    cleanResult = cleanResult.replace("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf:");
-                    if (cleanResult != null && !cleanResult.trim().isEmpty()) {
-                        joiner.add(cleanResult.trim());
+                StringJoiner joinerResultados = new StringJoiner(", ");
+                listaResultados.forEach(item -> {
+                    if (item != null) {
+                        String limpo = item;
+                        if (item.startsWith(BASE_ONTOLOGY_URI)) limpo = item.substring(BASE_ONTOLOGY_URI.length());
+                        limpo = limpo.replaceAll("\\^\\^<http://www.w3.org/2001/XMLSchema#string>", "");
+                        limpo = limpo.replaceAll("\\^\\^xsd:string", "");
+                        limpo = limpo.replaceAll("\\^\\^<http://www.w3.org/2001/XMLSchema#date>", "");
+                        limpo = limpo.replaceAll("\\^\\^xsd:date", "");
+                        if (!limpo.trim().isEmpty()) joinerResultados.add(limpo.trim());
                     }
                 });
-                String formattedResult = joiner.toString();
-                if (!formattedResult.isEmpty()) {
-                    logger.info("Resultados formatados: {}", formattedResult);
-                    respostaDetalhada.setResposta(formattedResult);
-                } else {
-                    logger.info("Nenhum resultado válido encontrado após limpeza/formatação.");
-                    respostaDetalhada.setResposta("Não foram encontrados resultados que correspondam à sua pergunta.");
-                }
+                String resFmt = joinerResultados.toString();
+                respostaDetalhada.setResposta(resFmt.isEmpty() ? "Não foram encontrados resultados válidos." : resFmt);
+                logger.info("Resultados formatados: {}", resFmt);
             }
 
-        } catch (IOException e) {
-            logger.error("Erro de IO durante o processamento da pergunta '{}': {}", question, e.getMessage(), e);
-            respostaDetalhada.setErro("Erro interno (IO) durante o processamento: " + e.getMessage());
-            respostaDetalhada.setSparqlQuery(finalQuery);
-        } catch (InterruptedException e) {
-            logger.error("Processamento da pergunta '{}' interrompido: {}", question, e.getMessage(), e);
+        } catch (FileNotFoundException e_fnf) {
+            logger.error("Erro (Arquivo não encontrado - template SPARQL?) ao processar '{}': {}", question, e_fnf.getMessage(), e_fnf);
+            respostaDetalhada.setErro("Erro interno: Componente necessário não encontrado (" + e_fnf.getMessage() + ").");
+        } catch (IOException e_io) {
+            logger.error("Erro de IO ao processar '{}': {}", question, e_io.getMessage(), e_io);
+            respostaDetalhada.setErro("Erro interno (IO): " + e_io.getMessage());
+        } catch (InterruptedException e_intr) {
+            logger.error("Processamento de '{}' interrompido: {}", question, e_intr.getMessage(), e_intr);
             Thread.currentThread().interrupt();
             respostaDetalhada.setErro("Processamento interrompido.");
-            respostaDetalhada.setSparqlQuery(finalQuery);
-        } catch (RuntimeException e) {
-            logger.error("Erro inesperado (RuntimeException) ao processar pergunta '{}': {}", question, e.getMessage(), e);
-            respostaDetalhada.setErro("Erro inesperado no servidor: " + e.getMessage());
-            respostaDetalhada.setSparqlQuery(finalQuery);
-        } catch (Exception e) {
-            logger.error("Erro completamente inesperado ao processar pergunta '{}': {}", question, e.getMessage(), e);
-            respostaDetalhada.setErro("Erro genérico inesperado no servidor.");
-            respostaDetalhada.setSparqlQuery(finalQuery);
+        } catch (RuntimeException e_rt) {
+            logger.error("Erro de Runtime (Python ou outro) ao processar '{}': {}", question, e_rt.getMessage(), e_rt);
+            respostaDetalhada.setErro("Erro inesperado no servidor: " + e_rt.getMessage());
+        } catch (Exception e_geral) {
+            logger.error("Erro GENÉRICO e inesperado ao processar '{}': {}", question, e_geral.getMessage(), e_geral);
+            respostaDetalhada.setErro("Erro genérico e inesperado no servidor.");
         }
-
-        logger.info("Pergunta '{}' processada. RespostaDetalhada: {}", question, respostaDetalhada);
+        if (respostaDetalhada.getSparqlQuery() == null) respostaDetalhada.setSparqlQuery(sparqlQueryGerada);
+        logger.info("Processamento da pergunta '{}' finalizado. Resposta: {}", question, respostaDetalhada);
         return respostaDetalhada;
     }
 
     private Map<String, Object> executePythonScript(String question) throws IOException, InterruptedException {
-        if (pythonScriptPath == null || !Files.exists(pythonScriptPath)) {
-            logger.error("Caminho do script Python não está configurado ou o arquivo não existe: {}", pythonScriptPath);
-            throw new FileNotFoundException("Script Python não encontrado ou não configurado.");
-        }
-        ProcessBuilder pb = new ProcessBuilder("python", pythonScriptPath.toString(), question);
-        pb.redirectErrorStream(true);
-        logger.info("Executando comando: {}", pb.command());
-        Process process = pb.start();
-        String output;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-            output = reader.lines().collect(Collectors.joining(System.lineSeparator()));
-        }
-        int exitCode = process.waitFor();
-        logger.info("Python stdout/stderr (EC:{}):\n---\n{}\n---", exitCode, output);
-        if (exitCode != 0) {
-            logger.error("Script Python terminou com erro (Código: {}).", exitCode);
-            throw new RuntimeException("Erro na execução do script Python. Código de saída: " + exitCode + ". Verifique os logs para detalhes da saída.");
-        }
-        String jsonOutput = null;
-        String[] lines = output.split("\\r?\\n");
-        for (int i = lines.length - 1; i >= 0; i--) {
-            String line = lines[i].trim();
-            if (!line.isEmpty() && line.startsWith("{") && line.endsWith("}")) {
-                jsonOutput = line;
-                break;
+        String pythonExec = System.getProperty("python.executable", "python3");
+        Path pythonExecPath = Paths.get(pythonExec);
+        if (!Files.exists(pythonExecPath) || !Files.isExecutable(pythonExecPath)) {
+            // Tenta encontrar no PATH se o caminho absoluto falhar ou não for fornecido
+            boolean foundInPath = false;
+            String systemPath = System.getenv("PATH");
+            if (systemPath != null) {
+                for (String pathDir : systemPath.split(File.pathSeparator)) {
+                    Path potentialPath = Paths.get(pathDir, pythonExec);
+                    if (Files.exists(potentialPath) && Files.isExecutable(potentialPath)) {
+                        pythonExec = potentialPath.toString();
+                        foundInPath = true;
+                        break;
+                    }
+                }
+            }
+            if (!foundInPath) { // Fallback para "python" simples
+                logger.warn("'python3' não encontrado ou não executável, tentando 'python'.");
+                pythonExec = "python";
             }
         }
-        if (jsonOutput == null) {
-            logger.error("Não foi encontrada a saída JSON esperada do script Python.");
-            throw new RuntimeException("Formato de saída inesperado do script Python (JSON não encontrado).");
+
+
+        ProcessBuilder pb = new ProcessBuilder(pythonExec, this.pythonScriptPath.toString(), question);
+        pb.environment().put("PYTHONIOENCODING", "UTF-8");
+        logger.info("Executando comando Python: {}", pb.command());
+        Process process = pb.start();
+
+        StringBuilder stdoutCollector = new StringBuilder();
+        StringBuilder stderrCollector = new StringBuilder();
+        try (
+                BufferedReader stdoutReader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+                BufferedReader stderrReader = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))
+        ) {
+            String line;
+            while ((line = stdoutReader.readLine()) != null) stdoutCollector.append(line).append(System.lineSeparator());
+            while ((line = stderrReader.readLine()) != null) stderrCollector.append(line).append(System.lineSeparator());
         }
-        ObjectMapper mapper = new ObjectMapper();
+
+        int exitCode = process.waitFor();
+        String stdoutResult = stdoutCollector.toString().trim();
+        String stderrResult = stderrCollector.toString().trim();
+
+        if (!stderrResult.isEmpty()) logger.warn("Script Python (stderr):\n---\n{}\n---", stderrResult);
+        logger.info("Script Python (stdout) (Cód. Saída: {}):\n---\n{}\n---", exitCode, stdoutResult);
+
+        if (stdoutResult.isEmpty()) {
+            String errorMsg = "Falha na execução do script Python: Sem saída JSON.";
+            if (exitCode != 0) errorMsg += " Código de erro: " + exitCode;
+            if (!stderrResult.isEmpty()) errorMsg += ". Stderr: " + stderrResult;
+            logger.error(errorMsg);
+            throw new RuntimeException(errorMsg);
+        }
+
         try {
-            return mapper.readValue(jsonOutput, new TypeReference<Map<String, Object>>() {});
-        } catch (Exception e) {
-            logger.error("Erro ao desserializar JSON do Python: {}. JSON recebido: {}", e.getMessage(), jsonOutput, e);
-            throw new RuntimeException("Erro ao processar resposta JSON do script Python.", e);
+            return new ObjectMapper().readValue(stdoutResult, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e_parse) {
+            logger.error("Erro ao desserializar JSON do Python: {}. Stdout: '{}', Stderr: '{}'", e_parse.getMessage(), stdoutResult, stderrResult, e_parse);
+            throw new RuntimeException("Erro ao processar resposta JSON do script Python. Verifique os logs.", e_parse);
         }
     }
 
     public String readTemplateContent(String templateId) throws IOException {
-        String templateFileName = templateId.replace(" ", "_") + ".txt";
-        logger.info("Tentando ler template do classpath: {}", "templates/" + templateFileName);
-        Resource resource = new ClassPathResource("templates/" + templateFileName);
+        String templateFileName = templateId.trim().replace(" ", "_") + ".txt";
+        String templateResourcePath = "templates/" + templateFileName;
+        logger.info("Lendo template SPARQL: {}", templateResourcePath);
 
+        Resource resource = new ClassPathResource(templateResourcePath);
         if (!resource.exists()) {
-            logger.error("Arquivo de template não encontrado no classpath: {}", "templates/" + templateFileName);
-            resource = new ClassPathResource(templateFileName); // Fallback para raiz
-            if (!resource.exists()) {
-                logger.error("Arquivo de template também não encontrado na raiz do classpath: {}", templateFileName);
-                throw new FileNotFoundException("Template não encontrado: " + templateFileName);
-            }
-            logger.warn("Template encontrado na raiz do resources, mas o esperado é em /templates/");
+            logger.error("ARQUIVO DE TEMPLATE SPARQL NÃO ENCONTRADO: {}", templateResourcePath);
+            throw new FileNotFoundException("Template SPARQL não encontrado: " + templateResourcePath);
         }
-
         try (InputStream inputStream = resource.getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
-        } catch (IOException e) {
-            logger.error("Erro ao ler arquivo de template: {}", templateFileName, e);
-            throw e;
+             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            return bufferedReader.lines().collect(Collectors.joining(System.lineSeparator()));
         }
     }
 
-    // *** MÉTODO buildSparqlQuery CORRIGIDO ***
     private String buildSparqlQuery(String templateContent, Map<String, String> placeholders, String templateId) {
-        String finalQuery = templateContent;
-        logger.debug("Iniciando construção da query para template '{}' com placeholders: {}", templateId, placeholders);
+        String queryAtual = templateContent;
+        logger.debug("Construindo query SPARQL para template '{}'. Placeholders: {}", templateId, placeholders);
 
-        // Itera sobre os placeholders para fazer as substituições
-        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-            String placeholderKey = entry.getKey();
-            String value = entry.getValue();
-            String replacement = null;
+        if (placeholders != null && !placeholders.isEmpty()) {
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                String phKey = entry.getKey();
+                String phValue = entry.getValue();
+                String valorSubstituicao;
 
-            if (value == null) {
-                logger.warn("Valor nulo para placeholder: {}", placeholderKey);
-                replacement = "__ERRO_VALOR_NULO_" + placeholderKey.replace("#","").replace("<","").replace(">","") + "__"; // Evita erro de sintaxe
-            } else {
-                switch (placeholderKey) {
-                    case "#ENTIDADE_NOME#":
-                        // Adiciona aspas duplas SEMPRE. Funciona para ticker em 1A/1B e label em 2A.
-                        replacement = "\"" + value.replace("\"", "\\\"") + "\"";
-                        break;
-
-                    case "#DATA#":
-                        replacement = "\"" + value + "\"^^xsd:date";
-                        break;
-
-                    case "#VALOR_DESEJADO#":
-                        // Para templates 1A/1B, este valor (ex: "precoFechamento") vira o predicado URI.
-                        if (templateId.equals("Template 1A") || templateId.equals("Template 1B")) {
-                            if (value.equals("codigo")) { // "codigo" não é um predicado de valor para estes templates
-                                logger.error("Erro de lógica: Template {} recebeu 'codigo' como #VALOR_DESEJADO#, que deveria ser um predicado de valor.", templateId);
-                                replacement = "b3:ERRO_VALOR_INVALIDO_PARA_PREDICADO";
-                            } else {
-                                String cleanValue = value.split("#")[0].trim(); // Remove comentários, se houver
-                                if (!cleanValue.isEmpty()) {
-                                    replacement = "b3:" + cleanValue; // Adiciona prefixo para URI
+                if (phValue == null) {
+                    logger.warn("Valor NULO para placeholder: '{}' (template '{}'). Substituindo por string de erro.", phKey, templateId);
+                    valorSubstituicao = "\"__ERRO_PH_VALOR_NULO_" + phKey.replace("#", "") + "__\"";
+                } else {
+                    String valorLimpo = phValue.replace("\"", "\\\"").trim();
+                    if (valorLimpo.isEmpty() && !phKey.toLowerCase().contains("opcional")) {
+                        logger.warn("Valor VAZIO para placeholder: '{}' (template '{}'). Substituindo por string de erro.", phKey, templateId);
+                        valorSubstituicao = "\"__ERRO_PH_VALOR_VAZIO_" + phKey.replace("#", "") + "__\"";
+                    } else {
+                        switch (phKey) {
+                            case "#ENTIDADE_NOME#":
+                                valorSubstituicao = "\"" + valorLimpo + "\"";
+                                break;
+                            case "#DATA#":
+                                valorSubstituicao = "\"" + valorLimpo + "\"^^xsd:date";
+                                break;
+                            case "#VALOR_DESEJADO#":
+                                if (!valorLimpo.isEmpty()) {
+                                    valorSubstituicao = "b3:" + valorLimpo;
                                 } else {
-                                    logger.error("Valor para #VALOR_DESEJADO# (predicado) resultou em vazio após limpeza: '{}'. Query será inválida.", value);
-                                    replacement = "b3:ERRO_PREDICADO_VAZIO";
+                                    logger.error("Valor para #VALOR_DESEJADO# (predicado) VAZIO. Template {}.", templateId);
+                                    valorSubstituicao = "b3:ERRO_PREDICADO_VAZIO";
                                 }
-                            }
-                        } else {
-                            // Para Template 2A, o valor é "codigo". O placeholder #VALOR_DESEJADO#
-                            // não é usado como predicado na query SPARQL do Template 2A.
-                            // Mantém o placeholder original para ser removido depois se não estiver no template.
-                            replacement = placeholderKey; // Mantém o placeholder original
-                            logger.trace("Placeholder #VALOR_DESEJADO# ('{}') não usado como predicado direto para template {}", value, templateId);
+                                break;
+                            case "#SETOR#":
+                                valorSubstituicao = "\"" + valorLimpo + "\"";
+                                break;
+                            default:
+                                logger.warn("Placeholder não tratado no switch: '{}' (template '{}'). Tratando como literal: '{}'", phKey, templateId, valorLimpo);
+                                valorSubstituicao = "\"" + valorLimpo + "\"";
+                                break;
                         }
-                        break;
+                    }
+                }
 
-                    default:
-                        logger.warn("Placeholder não reconhecido: {}. Substituição direta com valor: '{}'", placeholderKey, value);
-                        replacement = value; // Fallback para substituição direta
-                        break;
+                if (queryAtual.contains(phKey)) {
+                    queryAtual = queryAtual.replace(phKey, valorSubstituicao);
+                    logger.trace("Template '{}': Placeholder '{}' -> '{}'", templateId, phKey, valorSubstituicao);
+                } else if (!phKey.toLowerCase().contains("opcional")){
+                    logger.warn("Template '{}': Placeholder '{}' (valor: '{}') recebido do Python, mas NÃO encontrado no corpo do template.", templateId, phKey, phValue);
                 }
             }
-
-            // Realiza a substituição se replacement foi definido E é diferente do placeholder original
-            if (replacement != null && !replacement.equals(placeholderKey)) {
-                logger.trace("Substituindo '{}' por '{}'", placeholderKey, replacement);
-                finalQuery = finalQuery.replace(placeholderKey, replacement);
-            } else if (replacement != null && replacement.equals(placeholderKey)) {
-                // Caso onde o placeholder não deveria ser substituído (ex: #VALOR_DESEJADO# para Template 2A)
-                logger.trace("Placeholder {} mantido como está (não será substituído por este case, pode ser removido depois se não usado no template).", placeholderKey);
-            } else {
-                // replacementValue é null (por causa do value == null)
-                logger.warn("Replacement nulo para placeholder: {} (valor original era nulo). Placeholder original mantido para remoção.", placeholderKey);
-                finalQuery = finalQuery.replace(placeholderKey, "__ERRO_PLACEHOLDER_COM_VALOR_NULO__"); // Garante que é substituído
-            }
+        } else {
+            logger.warn("Nenhum placeholder recebido para o template '{}'.", templateId);
         }
 
-        // Limpeza final: remove placeholders que não foram substituídos e não deveriam estar lá
-        // Ex: Se #VALOR_DESEJADO# não for usado no Template 2A, ele será removido.
-        String queryAntesDaLimpezaFinal = finalQuery;
-        finalQuery = finalQuery.replaceAll("#[A-Z_]+#", ""); // Remove qualquer #PLACEHOLDER# restante
-
-        if (!finalQuery.equals(queryAntesDaLimpezaFinal)) {
-            logger.warn("Um ou mais placeholders não substituídos foram removidos da query. Query antes: \n{}\nQuery depois:\n{}", queryAntesDaLimpezaFinal, finalQuery);
+        Matcher matcherNaoSubst = Pattern.compile("#[A-Z_0-9]+#").matcher(queryAtual);
+        if (matcherNaoSubst.find()) {
+            logger.warn("Query final para template '{}' AINDA CONTÉM placeholders não substituídos (ex: {}). Query:\n{}",
+                    templateId, matcherNaoSubst.group(0), queryAtual);
         }
-
-        logger.info("Construção da query SPARQL finalizada.");
-        return finalQuery;
+        logger.info("Construção da query SPARQL para template '{}' finalizada.", templateId);
+        return queryAtual;
     }
 }

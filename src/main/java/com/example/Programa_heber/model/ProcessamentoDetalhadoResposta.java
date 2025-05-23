@@ -1,20 +1,29 @@
 package com.example.Programa_heber.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude; // Opcional, para omitir nulos no JSON de resposta
+
+@JsonInclude(JsonInclude.Include.NON_NULL) // Opcional: não serializa campos nulos para JSON
 public class ProcessamentoDetalhadoResposta {
+
+    private String sparqlQuery;
     private String resposta;
     private String erro;
-    private String sparqlQuery;
+    private String debugInfo; // Campo para informações de debug do script Python
 
     // Construtores
-    public ProcessamentoDetalhadoResposta() {}
-
-    public ProcessamentoDetalhadoResposta(String resposta, String erro, String sparqlQuery) {
-        this.resposta = resposta;
-        this.erro = erro;
-        this.sparqlQuery = sparqlQuery;
+    public ProcessamentoDetalhadoResposta() {
+        // Construtor padrão
     }
 
     // Getters e Setters
+    public String getSparqlQuery() {
+        return sparqlQuery;
+    }
+
+    public void setSparqlQuery(String sparqlQuery) {
+        this.sparqlQuery = sparqlQuery;
+    }
+
     public String getResposta() {
         return resposta;
     }
@@ -31,21 +40,25 @@ public class ProcessamentoDetalhadoResposta {
         this.erro = erro;
     }
 
-    public String getSparqlQuery() {
-        return sparqlQuery;
+    public String getDebugInfo() {
+        return debugInfo;
     }
 
-    public void setSparqlQuery(String sparqlQuery) {
-        this.sparqlQuery = sparqlQuery;
+    public void setDebugInfo(String debugInfo) {
+        this.debugInfo = debugInfo;
     }
 
-    // Opcional: Sobrescrever toString() para logging mais fácil
     @Override
     public String toString() {
+        // Evita quebras de linha excessivas no log, útil para sparqlQuery e debugInfo
+        String queryNoNewline = (sparqlQuery != null) ? sparqlQuery.replace("\n", " ").replace("\r", " ") : null;
+        String debugNoNewline = (debugInfo != null) ? debugInfo.replace("\n", " ").replace("\r", " ") : null;
+
         return "ProcessamentoDetalhadoResposta{" +
-                "resposta='" + resposta + '\'' +
+                "sparqlQuery='" + queryNoNewline + '\'' +
+                ", resposta='" + resposta + '\'' +
                 ", erro='" + erro + '\'' +
-                ", sparqlQuery='" + (sparqlQuery != null ? sparqlQuery.substring(0, Math.min(sparqlQuery.length(), 100)) + "..." : "null") + '\'' + // Evita logar queries muito longas
+                ", debugInfo='" + debugNoNewline + '\'' +
                 '}';
     }
 }
