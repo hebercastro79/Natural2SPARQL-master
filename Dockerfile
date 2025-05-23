@@ -32,7 +32,7 @@ EXPOSE 5000
 # CMD DE PRODUÇÃO (DEVE FUNCIONAR SE A ESTRUTURA ESTIVER CORRETA)
 # Gunicorn vai mudar para o diretório 'src' (que estará em /app/src) antes de carregar 'app:app'
 # O app:app refere-se ao arquivo app.py (módulo app) e à variável app dentro dele.
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--chdir", "src", "app:app"]
+# CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--chdir", "src", "app:app"] # MANTENHA ESTA LINHA COMENTADA POR ENQUANTO
 # -------------------------------------------------------------------------
 
 # -------------------------------------------------------------------------
@@ -42,4 +42,4 @@ CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--chdir", "src", "app:app"]
 # e então tentará executar o Gunicorn.
 # Observe a saída desses comandos nos logs de runtime do Render.
 # -------------------------------------------------------------------------
-# CMD ["sh", "-c", "echo 'DEBUG: PYTHONPATH é ${PYTHONPATH}' && echo 'DEBUG: Current Directory:' && pwd && echo 'DEBUG: Conteúdo de /app:' && ls -Rla /app && echo 'DEBUG: Conteúdo de /app/src:' && ls -Rla /app/src && echo 'DEBUG: Tentando rodar Gunicorn com chdir src...' && gunicorn --bind 0.0.0.0:5000 --chdir src app:app"]
+CMD ["sh", "-c", "echo 'DEBUG: PYTHONPATH é ${PYTHONPATH}' && echo 'DEBUG: Current Directory:' && pwd && echo 'DEBUG: Conteúdo de /app:' && ls -Rla /app && echo 'DEBUG: Conteúdo de /app/src:' && ls -Rla /app/src && echo 'DEBUG: Tentando rodar Gunicorn com chdir src...' && gunicorn --bind 0.0.0.0:5000 --chdir src app:app"] # MANTENHA ESTA LINHA DESCOMENTADA PARA DEPURAÇÃO
