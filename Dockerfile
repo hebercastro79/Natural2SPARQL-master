@@ -23,20 +23,23 @@ COPY . .
 
 # Adiciona o diretório /app/src ao PYTHONPATH
 # Isso ajuda o Python a encontrar módulos dentro de /app/src
-# mesmo que o Gunicorn não esteja sendo executado com /app/src como diretório de trabalho.
-# No entanto, com '--chdir src' no Gunicorn, isso pode ser redundante, mas não prejudica.
 ENV PYTHONPATH "${PYTHONPATH}:/app/src"
 
 # Expõe a porta que a aplicação Flask usa (conforme definido em app.py ou gunicorn)
 EXPOSE 5000
 
-# Comando para rodar a aplicação quando o container iniciar
+# -------------------------------------------------------------------------
+# CMD DE PRODUÇÃO (DEVE FUNCIONAR SE A ESTRUTURA ESTIVER CORRETA)
 # Gunicorn vai mudar para o diretório 'src' (que estará em /app/src) antes de carregar 'app:app'
 # O app:app refere-se ao arquivo app.py (módulo app) e à variável app dentro dele.
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--chdir", "src", "app:app"]
+# -------------------------------------------------------------------------
 
 # -------------------------------------------------------------------------
-# CMD PARA DEPURAÇÃO (use se o CMD acima ainda falhar):
-# Comente o CMD acima e descomente este para listar arquivos e tentar executar.
+# CMD PARA DEPURAÇÃO (ATIVE-O SE O CMD DE PRODUÇÃO ACIMA FALHAR)
+# Para ativar: comente o CMD de produção acima e DESCOMENTE este CMD de depuração.
+# Este CMD irá listar o conteúdo dos diretórios /app e /app/src, o PYTHONPATH,
+# e então tentará executar o Gunicorn.
+# Observe a saída desses comandos nos logs de runtime do Render.
 # -------------------------------------------------------------------------
-# CMD ["sh", "-c", "echo 'DEBUG: PYTHONPATH é ${PYTHONPATH}' && echo 'DEBUG: Conteúdo de /app:' && ls -Rla /app && echo 'DEBUG: Conteúdo de /app/src:' && ls -Rla /app/src && echo 'DEBUG: Tentando rodar Gunicorn com chdir src...' && gunicorn --bind 0.0.0.0:5000 --chdir src app:app"]
+# CMD ["sh", "-c", "echo 'DEBUG: PYTHONPATH é ${PYTHONPATH}' && echo 'DEBUG: Current Directory:' && pwd && echo 'DEBUG: Conteúdo de /app:' && ls -Rla /app && echo 'DEBUG: Conteúdo de /app/src:' && ls -Rla /app/src && echo 'DEBUG: Tentando rodar Gunicorn com chdir src...' && gunicorn --bind 0.0.0.0:5000 --chdir src app:app"]
