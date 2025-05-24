@@ -1,10 +1,8 @@
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX stock: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#> 
 SELECT DISTINCT ?empresa (SAMPLE(STR(?setorLabel)) as ?sl)
 WHERE {
   ?empresa stock:atuaEm ?setorUri .
   ?setorUri rdfs:label ?setorLabel .
-  FILTER(REGEX(STR(?setorLabel), #SETOR_REGEX_PATTERN#, "i")) 
+  FILTER(REGEX(STR(?setorLabel), "energia.*el[eé]trica", "i")) 
 }
 GROUP BY ?empresa 
-LIMIT 100 # Aumente para ver se há mais de 9 empresas no setor
+LIMIT 100
