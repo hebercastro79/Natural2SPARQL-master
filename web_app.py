@@ -2,44 +2,61 @@ from flask import Flask, request, jsonify, send_from_directory
 import subprocess
 import json
 import os
-from rdflib import Graph
+from rdflib import Graph, Namespace # Adicionado Namespace aqui
 from rdflib.plugins.sparql import prepareQuery
 import logging
-import sys # <--- ADICIONE ESTA LINHA
+import sys # Importado sys
 
-# Configuração do logging do Flask (faça isso ANTES de criar o 'app')
-# Para ver logs no Render, eles precisam ir para stdout/stderr
+# Configuração do logging do Flask
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# Se quiser logs mais detalhados durante o desenvolvimento, mude para logging.DEBUG
-# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+flask_logger = logging.getLogger('flask.app')
 
 app = Flask(__name__, static_folder='src/main/resources/static')
-# Define um logger específico para a aplicação Flask para facilitar o rastreamento
-flask_logger = logging.getLogger('flask.app') # Usado em vez de app.logger para consistência com a config acima
 
 # --- CONFIGURAÇÕES DE CAMINHO DENTRO DO CONTAINER ---
-BASE_APP_DIR = "/app" # WORKDIR do Dockerfile
-
-# Caminho para o script pln_processor.py
+BASE_APP_DIR = "/app" 
 PLN_PROCESSOR_SCRIPT_PATH = os.path.join(BASE_APP_DIR, "src", "main", "resources", "pln_processor.py")
-# Diretório de trabalho para o pln_processor.py (onde ele espera seus .txt, .json)
 CWD_FOR_PLN = os.path.join(BASE_APP_DIR, "src", "main", "resources")
-
-# Diretório dos templates SPARQL (.txt)
 SPARQL_TEMPLATES_DIR = os.path.join(BASE_APP_DIR, "src", "main", "resources", "Templates")
-
-# Caminho para o arquivo de ontologia principal (agora na raiz /app)
 ONTOLOGY_FILE_PATH = os.path.join(BASE_APP_DIR, "ontologiaB3.ttl")
 
 # Carregar a ontologia uma vez quando a aplicação inicia
 graph = Graph()
+# Definindo os namespaces que serão usados globalmente pelo RDFLib e passados para prepareQuery
+NS_B3 = Namespace("https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#")
+NS_STOCK = Namespace("https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#") # Mesmo que b3, mas usado nos templates
+NS_RDF = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+NS_RDFS = Namespace("http://www.w3.org/2000/01/rdf-schema#")
+NS_XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
+NS_OWL = Namespace("http://www.w3.org/2002/07/owl#")
+
+# Bind namespaces ao grafo para serializações mais bonitas (opcional, mas bom)
+graph.bind("b3", NS_B3)
+graph.bind("stock", NS_STOCK)
+graph.bind("rdf", NS_RDF)
+graph.bind("rdfs", NS_RDFS)
+graph.bind("xsd", NS_XSD)
+graph.bind("owl", NS_OWL)
+
+# Dicionário de namespaces para initNs em prepareQuery
+INIT_NS = {
+    "b3": NS_B3,
+    "stock": NS_STOCK,
+    "rdf": NS_RDF,
+    "rdfs": NS_RDFS,
+    "xsd": NS_XSD,
+    "owl": NS_OWL
+    # Adicione outros prefixos se seus templates SPARQL os usarem
+}
+
+
 if os.path.exists(ONTOLOGY_FILE_PATH):
     flask_logger.info(f"Carregando ontologia de: {ONTOLOGY_FILE_PATH}")
     try:
         graph.parse(ONTOLOGY_FILE_PATH, format="turtle")
         flask_logger.info(f"Ontologia carregada com {len(graph)} triplas.")
     except Exception as e:
-        flask_logger.error(f"Erro CRÍTICO ao carregar ontologia: {e}. A aplicação pode não funcionar corretamente.")
+        flask_logger.error(f"Erro CRÍTICO ao carregar ontologia: {e}. A aplicação pode não funcionar corretamente.", exc_info=True)
 else:
     flask_logger.error(f"ARQUIVO DE ONTOLOGIA NÃO ENCONTRADO EM: {ONTOLOGY_FILE_PATH}. As consultas SPARQL falharão.")
 
@@ -51,7 +68,7 @@ def index():
     try:
         return send_from_directory(app.static_folder, 'index2.html')
     except Exception as e:
-        flask_logger.error(f"Erro ao tentar servir o index2.html: {e}")
+        flask_logger.error(f"Erro ao tentar servir o index2.html: {e}", exc_info=True)
         return "Erro ao carregar a interface principal. Verifique os logs do servidor.", 500
 
 # --- ENDPOINT PRINCIPAL DE PROCESSAMENTO ---
@@ -91,7 +108,7 @@ def processar_pergunta_completa():
         
         if "erro" in pln_output_json:
             flask_logger.error(f"Erro estruturado retornado pelo PLN: {pln_output_json['erro']}")
-            return jsonify(pln_output_json), 400
+            return jsonify(pln_output_json), 400 
 
         if "template_nome" not in pln_output_json or "mapeamentos" not in pln_output_json:
             flask_logger.error(f"Saída do PLN inesperada (faltando template_nome ou mapeamentos): {pln_output_json}")
@@ -136,7 +153,7 @@ def processar_pergunta_completa():
                 valor_sparql_formatado = f'"{valor_escapado}"'
             elif placeholder_key == "#VALOR_DESEJADO#":
                 if ":" not in valor_str_raw and not valor_str_raw.startswith("<"):
-                    valor_sparql_formatado = f'b3:{valor_str_raw}'
+                    valor_sparql_formatado = f'b3:{valor_str_raw}' # Assume prefixo b3:
                 else:
                     valor_sparql_formatado = valor_str_raw
             elif placeholder_key == "#SETOR#":
@@ -163,7 +180,8 @@ def processar_pergunta_completa():
             flask_logger.error("Ontologia não carregada ou vazia, não é possível executar a consulta.")
             return jsonify({"erro": "Falha ao carregar a ontologia base ou está vazia.", "sparqlQuery": sparql_query_string_final}), 500
         
-        query_obj = prepareQuery(sparql_query_string_final)
+        # Passar initNs para prepareQuery com os namespaces definidos globalmente
+        query_obj = prepareQuery(sparql_query_string_final, initNs=INIT_NS) 
         
         flask_logger.info("Executando consulta SPARQL...")
         qres = graph.query(query_obj)
@@ -199,6 +217,7 @@ def processar_pergunta_completa():
     except Exception as e_sparql:
         flask_logger.error(f"Erro ao executar consulta SPARQL: {e_sparql}", exc_info=True)
         flask_logger.error(f"Consulta que falhou: \n{sparql_query_string_final}")
+        # Retorna a query que falhou para o frontend para debug
         return jsonify({"erro": f"Erro ao executar consulta SPARQL: {str(e_sparql)}", "sparqlQuery": sparql_query_string_final}), 500
 
     # 4. Retornar tudo para o frontend
