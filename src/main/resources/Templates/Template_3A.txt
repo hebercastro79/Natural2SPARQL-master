@@ -1,13 +1,10 @@
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX stock: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#> 
-
-SELECT (COUNT(DISTINCT ?empresa) AS ?totalEmpresasNoSetor) (SAMPLE(?setorLabel) AS ?setorLabelMostrado)
+SELECT DISTINCT ?empresa (SAMPLE(STR(?setorLabel)) as ?sl)
 WHERE {
   ?empresa stock:atuaEm ?setorUri .
   ?setorUri rdfs:label ?setorLabel .
-  # O placeholder #SETOR_REGEX_PATTERN# será substituído pelo web_app.py
-  # com o padrão como "energia.*el[eé]trica" (com aspas)
   FILTER(REGEX(STR(?setorLabel), #SETOR_REGEX_PATTERN#, "i")) 
 }
-GROUP BY ?setorLabelMostrado # Necessário por causa do SAMPLE, mas como só esperamos um tipo de setor, deve funcionar
+GROUP BY ?empresa 
+LIMIT 100 # Aumente para ver se há mais de 9 empresas no setor
