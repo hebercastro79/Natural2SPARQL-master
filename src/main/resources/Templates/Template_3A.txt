@@ -6,9 +6,9 @@ SELECT DISTINCT ?valor
 WHERE {
   ?empresa stock:atuaEm ?setorUri .
   ?setorUri rdfs:label ?setorLabel .
-  FILTER(CONTAINS(LCASE(STR(?setorLabel)), LCASE(#SETOR#))) 
+  # DEVE ESTAR ASSIM:
+  FILTER(REGEX(STR(?setorLabel), #SETOR_REGEX_PATTERN#, "i")) 
 
-  
   OPTIONAL { 
     ?empresa stock:temValorMobiliarioNegociado ?vmOpt .
     ?vmOpt stock:representadoPor ?codOpt .
@@ -19,10 +19,8 @@ WHERE {
     ?codDirOpt stock:ticker ?tickerViaDireto .
   }
   
-
   BIND(COALESCE(?tickerViaVm, ?tickerViaDireto) AS ?tickerBruto)
   FILTER(BOUND(?tickerBruto)) 
-
   
   FILTER REGEX(STR(?tickerBruto), "^[A-Z]{4}[0-9]{1,2}$", "i") 
   BIND(?tickerBruto AS ?valor) 
