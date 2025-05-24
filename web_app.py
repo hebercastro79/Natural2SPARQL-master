@@ -6,17 +6,17 @@ from rdflib import Graph, Namespace
 from rdflib.plugins.sparql import prepareQuery
 import logging
 import sys
+import re # Importado re
+import unicodedata # Importado unicodedata
 
 # Configuração do logging do Flask
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# Para logs mais detalhados durante o desenvolvimento, mude para logging.DEBUG
-# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-app = Flask(__name__, static_folder='src/main/resources/static')
 flask_logger = logging.getLogger('flask.app')
 
+app = Flask(__name__, static_folder='src/main/resources/static')
+
 # --- CONFIGURAÇÕES DE CAMINHO DENTRO DO CONTAINER ---
-BASE_APP_DIR = "/app"
+BASE_APP_DIR = "/app" 
 PLN_PROCESSOR_SCRIPT_PATH = os.path.join(BASE_APP_DIR, "src", "main", "resources", "pln_processor.py")
 CWD_FOR_PLN = os.path.join(BASE_APP_DIR, "src", "main", "resources")
 SPARQL_TEMPLATES_DIR = os.path.join(BASE_APP_DIR, "src", "main", "resources", "Templates")
@@ -52,6 +52,63 @@ if os.path.exists(ONTOLOGY_FILE_PATH):
         flask_logger.error(f"Erro CRÍTICO ao carregar ontologia: {e}. A aplicação pode não funcionar corretamente.", exc_info=True)
 else:
     flask_logger.error(f"ARQUIVO DE ONTOLOGIA NÃO ENCONTRADO EM: {ONTOLOGY_FILE_PATH}. As consultas SPARQL falharão.")
+
+# --- Função auxiliar para normalizar texto para Regex ---
+def normalizar_para_regex_pattern(texto_setor_bruto):
+    if not texto_setor_bruto:
+        return ".*" # Corresponde a qualquer coisa se o setor estiver vazio, embora isso deva ser tratado antes
+    
+    # Normaliza removendo acentos e convertendo para minúsculas
+    nfkd_form = unicodedata.normalize('NFKD', texto_setor_bruto)
+    texto_sem_acentos = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+    setor_normalizado = texto_sem_acentos.lower()
+    
+    palavras_setor = setor_normalizado.split()
+    
+    # Constrói um padrão regex que exige que todas as palavras estejam presentes,
+    # em qualquer ordem, permitindo qualquer coisa entre elas.
+    # Ex: "Energia Eletrica" -> "(?=.*energia)(?=.*eletrica)"
+    # O "i" no REGEX SPARQL já lida com case-insensitivity, mas normalizar aqui ajuda.
+    if not palavras_setor:
+        return ".*" # Deve ser raro
+        
+    # Escapa caracteres especiais de regex em cada palavra
+    palavras_escapadas_para_regex = [re.escape(palavra) for palavra in palavras_setor]
+
+    # Cria lookaheads positivos para cada palavra
+    # (?=.*palavra1)(?=.*palavra2)
+    # Isso garante que todas as palavras existam no texto, em qualquer ordem.
+    padrao_regex_final = "".join([f"(?=.*{p})" for p in palavras_escapadas_para_regex])
+    
+    # Se você preferir que as palavras apareçam em ordem, com qualquer coisa entre elas:
+    # padrao_regex_final = ".*".join(palavras_escapadas_para_regex) 
+    # Ex: "energia.*eletrica" (isso é mais simples e pode ser suficiente)
+    # Vamos usar a versão mais simples por enquanto, pois o lookahead pode ser overkill
+    # ou ter problemas de performance dependendo do triplestore/rdflib.
+
+    # Versão simples: palavras em ordem, com .* entre elas.
+    # Adicionamos flexibilidade para acentos comuns em português no "eletrica"
+    # se o setor for "Energia Elétrica"
+    if "energia" in setor_normalizado and ("eletrica" in setor_normalizado):
+        padrao_regex_final = "energia.*el[eé]trica" # Específico para "Energia Elétrica"
+    else:
+        # Genérico: junta as palavras normalizadas e escapadas com ".*"
+        palavras_para_join = []
+        for palavra in palavras_setor:
+            palavra_escapada = re.escape(palavra)
+            # Adiciona flexibilidade para acentos comuns (a, e, i, o, u, c)
+            # Isso é uma heurística e pode ser expandida
+            palavra_flex_acentos = palavra_escapada.replace("a", "[aáàâãä]") \
+                                                 .replace("e", "[eéèêë]") \
+                                                 .replace("i", "[iíìîï]") \
+                                                 .replace("o", "[oóòôõö]") \
+                                                 .replace("u", "[uúùûü]") \
+                                                 .replace("c", "[cç]")
+            palavras_para_join.append(palavra_flex_acentos)
+        padrao_regex_final = ".*".join(palavras_para_join)
+        
+    return padrao_regex_final
+
 
 @app.route('/', methods=['GET'])
 def index():
@@ -90,7 +147,7 @@ def processar_pergunta_completa():
         pln_output_json = json.loads(output_str_pln)
         if "erro" in pln_output_json:
             flask_logger.error(f"Erro estruturado retornado pelo PLN: {pln_output_json['erro']}")
-            return jsonify(pln_output_json), 400
+            return jsonify(pln_output_json), 400 
         if "template_nome" not in pln_output_json or "mapeamentos" not in pln_output_json:
             flask_logger.error(f"Saída do PLN inesperada: {pln_output_json}")
             return jsonify({"erro": "Saída do PLN inválida ou incompleta.", "sparqlQuery": "N/A"}), 500
@@ -117,9 +174,19 @@ def processar_pergunta_completa():
         with open(template_file_path, 'r', encoding='utf-8') as f_template:
             sparql_query_template_content = f_template.read()
         sparql_query_string_final = sparql_query_template_content
+        
+        # Lógica de construção de #SETOR_REGEX_PATTERN# movida para cá
+        if template_nome == "Template 3A" and "#SETOR#" in mapeamentos:
+            setor_bruto_do_pln = str(mapeamentos["#SETOR#"])
+            setor_regex_pattern = normalizar_para_regex_pattern(setor_bruto_do_pln)
+            flask_logger.info(f"Para #SETOR#='{setor_bruto_do_pln}', padrão regex gerado: '{setor_regex_pattern}' para #SETOR_REGEX_PATTERN#")
+            # Adiciona ou sobrescreve o mapeamento para o placeholder que o template espera
+            mapeamentos["#SETOR_REGEX_PATTERN#"] = setor_regex_pattern
+        
         for placeholder_key, valor_raw in mapeamentos.items():
             valor_sparql_formatado = ""
             valor_str_raw = str(valor_raw)
+
             if placeholder_key == "#DATA#":
                 valor_sparql_formatado = f'"{valor_str_raw}"^^xsd:date'
             elif placeholder_key == "#ENTIDADE_NOME#":
@@ -130,79 +197,44 @@ def processar_pergunta_completa():
                     valor_sparql_formatado = f'b3:{valor_str_raw}'
                 else:
                     valor_sparql_formatado = valor_str_raw
-            elif placeholder_key == "#SETOR#":
-                valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
-                valor_sparql_formatado = f'"{valor_escapado}"'
+            elif placeholder_key == "#SETOR#": 
+                # Se o Template 3A usa #SETOR_REGEX_PATTERN#, este #SETOR# original não será substituído nele.
+                # Mas outros templates podem usar #SETOR# diretamente.
+                if template_nome != "Template 3A" or "#SETOR_REGEX_PATTERN#" not in sparql_query_string_final:
+                    valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
+                    valor_sparql_formatado = f'"{valor_escapado}"'
+                else:
+                    flask_logger.debug(f"Ignorando substituição de #SETOR# pois #SETOR_REGEX_PATTERN# será usado para Template 3A.")
+                    continue # Pula para o próximo placeholder
+            elif placeholder_key == "#SETOR_REGEX_PATTERN#":
+                # O valor já é o padrão regex, não precisa de aspas SPARQL
+                # Apenas certifique-se de que não há caracteres que quebrariam a string SPARQL
+                # (re.escape na função normalizar_para_regex_pattern já deve cuidar disso)
+                valor_sparql_formatado = valor_str_raw 
             else:
                 flask_logger.warning(f"Placeholder não tratado explicitamente '{placeholder_key}'. Usando como string literal.")
                 valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
                 valor_sparql_formatado = f'"{valor_escapado}"'
-            flask_logger.info(f"Substituindo '{placeholder_key}' por '{valor_sparql_formatado}' no template SPARQL.")
-            sparql_query_string_final = sparql_query_string_final.replace(str(placeholder_key), valor_sparql_formatado)
+
+            if valor_sparql_formatado or placeholder_key == "#SETOR_REGEX_PATTERN#": # Regex pode ser string vazia se setor for vazio
+                flask_logger.info(f"Substituindo '{placeholder_key}' por '{valor_sparql_formatado}' no template SPARQL.")
+                sparql_query_string_final = sparql_query_string_final.replace(str(placeholder_key), valor_sparql_formatado)
+            elif placeholder_key != "#SETOR#": 
+                flask_logger.warning(f"Placeholder '{placeholder_key}' não teve valor formatado e não foi substituído.")
+        
         flask_logger.info(f"Consulta SPARQL final gerada: \n{sparql_query_string_final}")
     except Exception as e_template:
         flask_logger.error(f"Erro ao processar template SPARQL: {e_template}", exc_info=True)
         return jsonify({"erro": f"Erro ao gerar consulta SPARQL: {str(e_template)}", "sparqlQuery": sparql_query_template_content}), 500
 
-    # ***** BLOCO DE DEBUG PARA TEMPLATE 3A (ADICIONADO) *****
-    if template_nome == "Template 3A": # Verifica se é o template problemático
-        if not graph or len(graph) == 0:
-            flask_logger.warning("--- DEBUG TEMPLATE 3A: Ontologia não carregada, pulando query de debug de setores. ---")
-        else:
-            debug_query_str = """
-                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX stock: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#>
-                
-                SELECT ?setorUri ?setorLabel (LCASE(STR(?setorLabel)) AS ?lcaseStrLabel) (STR(?setorLabel) AS ?strLabel)
-                WHERE {
-                    # Tenta encontrar instâncias de Setor_Atuacao ou suas subclasses que tenham um label
-                    # Pode ser necessário ajustar o ?setorUri rdf:type ?tipoSetor . ?tipoSetor rdfs:subClassOf* stock:Setor_Atuacao .
-                    # se as empresas estiverem ligadas a subclasses de Setor_Atuacao.
-                    # Por simplicidade, vamos tentar pegar qualquer coisa com rdfs:label primeiro e filtrar depois.
-                    ?setorUri rdfs:label ?setorLabel .
-                    # Opcionalmente, filtre para garantir que ?setorUri é um tipo de setor, se necessário
-                    # ?setorUri rdf:type stock:Setor_Atuacao . # Ou uma superclasse relevante
-                }
-                LIMIT 200
-            """
-            flask_logger.info(f"--- DEBUG TEMPLATE 3A: Executando query de debug de setores --- \n{debug_query_str}")
-            try:
-                debug_q_obj = prepareQuery(debug_query_str, initNs=INIT_NS)
-                debug_results = graph.query(debug_q_obj)
-                flask_logger.info("--- DEBUG TEMPLATE 3A: Labels de Setor Encontrados na Ontologia (Limit 200) ---")
-                found_any_debug_sector = False
-                target_lcase_setor = "energia elétrica" # LCASE("Energia Elétrica")
-
-                for r_idx, row_debug in enumerate(debug_results):
-                    found_any_debug_sector = True
-                    current_lcase_label = str(row_debug.lcaseStrLabel) if row_debug.lcaseStrLabel else ""
-                    
-                    # Log detalhado de cada setor encontrado
-                    flask_logger.info(
-                        f"  Setor Debug {r_idx}: URI= {row_debug.setorUri}, "
-                        f"LabelRaw= '{row_debug.setorLabel}', "
-                        f"StrLabel= '{row_debug.strLabel}', "
-                        f"LcaseStrLabel= '{current_lcase_label}'"
-                    )
-                    
-                    # Verificação do CONTAINS
-                    if target_lcase_setor in current_lcase_label:
-                        flask_logger.info(f"    CONTAINS('{current_lcase_label}', '{target_lcase_setor}')? SIM.")
-                    else:
-                        flask_logger.info(f"    CONTAINS('{current_lcase_label}', '{target_lcase_setor}')? NÃO.")
-                
-                if not found_any_debug_sector:
-                    flask_logger.info("--- DEBUG TEMPLATE 3A: Nenhum rdfs:label encontrado para qualquer ?setorUri. Verifique a query de debug. ---")
-
-            except Exception as e_debug_sparql:
-                flask_logger.error(f"--- DEBUG TEMPLATE 3A: Erro na query de debug de setores: {e_debug_sparql} ---", exc_info=True)
-    # ***** FIM DO BLOCO DE DEBUG PARA TEMPLATE 3A *****
+    # Bloco de DEBUG para Template 3A (REMOVIDO DAQUI, pois a query principal já será executada)
+    # A verificação dos labels pode ser feita inspecionando a ontologia ou com queries de teste separadas se necessário.
 
     resposta_formatada_final = "Não foi possível executar a consulta ou não houve resultados."
     try:
         if not graph or len(graph) == 0:
-            flask_logger.error("Ontologia não carregada ou vazia, não é possível executar a consulta.")
-            return jsonify({"erro": "Falha ao carregar a ontologia base ou está vazia.", "sparqlQuery": sparql_query_string_final}), 500
+            flask_logger.error("Ontologia não carregada ou vazia.")
+            return jsonify({"erro": "Falha ao carregar a ontologia base.", "sparqlQuery": sparql_query_string_final}), 500
         
         query_obj = prepareQuery(sparql_query_string_final, initNs=INIT_NS)
         flask_logger.info("Executando consulta SPARQL principal...")
@@ -229,10 +261,10 @@ def processar_pergunta_completa():
             if not resposta_formatada_final.strip():
                 resposta_formatada_final = "Nenhum resultado para CONSTRUCT/DESCRIBE."
         else:
-            resposta_formatada_final = f"Tipo de consulta não suportado para formatação padrão: {qres.type}"
-        flask_logger.info(f"Consulta SPARQL principal executada. Tipo: {qres.type}. Resposta (início): {str(resposta_formatada_final)[:200]}...")
+            resposta_formatada_final = f"Tipo de consulta não suportado: {qres.type}"
+        flask_logger.info(f"Consulta SPARQL executada. Tipo: {qres.type}. Resposta (início): {str(resposta_formatada_final)[:200]}...")
     except Exception as e_sparql:
-        flask_logger.error(f"Erro ao executar consulta SPARQL principal: {e_sparql}", exc_info=True)
+        flask_logger.error(f"Erro ao executar consulta SPARQL: {e_sparql}", exc_info=True)
         flask_logger.error(f"Consulta que falhou: \n{sparql_query_string_final}")
         return jsonify({"erro": f"Erro ao executar consulta SPARQL: {str(e_sparql)}", "sparqlQuery": sparql_query_string_final}), 500
 
@@ -244,6 +276,4 @@ def processar_pergunta_completa():
 if __name__ == '__main__':
     local_port = int(os.environ.get("PORT", 5001)) 
     flask_logger.info(f"Iniciando servidor Flask de desenvolvimento em http://0.0.0.0:{local_port}")
-    # Para logs de debug do Flask em desenvolvimento local, você pode passar debug=True
-    # e o logging.basicConfig já está configurado para INFO (ou DEBUG se você mudou).
-    app.run(host='0.0.0.0', port=local_port, debug=False) # debug=False para não rodar dois reloader, logging já configurado
+    app.run(host='0.0.0.0', port=local_port, debug=True)
