@@ -1,11 +1,7 @@
 Flask
 gunicorn
 spacy
-
-# Estas são grandes, adicione apenas se estritamente necessário pelo seu código Python
-# ou se o spaCy falhar sem elas de forma explícita.
-# transformers
-# torch
-
-# Opcional, se você usar nltk
-# nltk
+# transformers (se seu pln_processor.py ou modelos spaCy os exigirem explicitamente)
+# torch      (mesma consideração acima)
+# nltk       (se seu pln_processor.py usa)
+rdflib

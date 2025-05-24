@@ -1,139 +1,234 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, send_from_directory
 import subprocess
 import json
 import os
+from rdflib import Graph
+from rdflib.plugins.sparql import prepareQuery
+import logging
 
-app = Flask(__name__)
+# Configuração do logging do Flask (faça isso ANTES de criar o 'app')
+# Para ver logs no Render, eles precisam ir para stdout/stderr
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# Se quiser logs mais detalhados durante o desenvolvimento, mude para logging.DEBUG
+# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-# Caminho para o script pln_processor.py DENTRO DO CONTAINER
-# O Dockerfile copiará tudo para /app, então a estrutura será /app/src/main/resources/pln_processor.py
-PLN_PROCESSOR_SCRIPT_PATH = "/app/src/main/resources/pln_processor.py"
+app = Flask(__name__, static_folder='src/main/resources/static')
+# Define um logger específico para a aplicação Flask para facilitar o rastreamento
+flask_logger = logging.getLogger('flask.app') # Usado em vez de app.logger para consistência com a config acima
 
-# Diretório onde o pln_processor.py espera encontrar seus arquivos de resources
-# que é o mesmo diretório do script pln_processor.py
-CWD_FOR_PLN = "/app/src/main/resources"
+# --- CONFIGURAÇÕES DE CAMINHO DENTRO DO CONTAINER ---
+BASE_APP_DIR = "/app" # WORKDIR do Dockerfile
 
-# HTML simples para a interface
-HTML_FORM = """
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste Natural2SPARQL (PLN)</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #5a5a5a; }
-        textarea, button { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ddd; box-sizing: border-box; }
-        textarea { height: 80px; }
-        button { background-color: #007bff; color: white; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
-        pre { background-color: #eee; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; }
-        .error { color: red; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Teste do Processador PLN - Natural2SPARQL</h1>
-        <form id="plnForm">
-            <textarea id="pergunta" name="pergunta" placeholder="Digite sua pergunta em linguagem natural aqui..."></textarea>
-            <button type="submit">Processar Pergunta</button>
-        </form>
-        <h2>Resultado:</h2>
-        <pre id="resultado"><code id="resultado-json">Aguardando pergunta...</code></pre>
-    </div>
-    <script>
-        document.getElementById('plnForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const pergunta = document.getElementById('pergunta').value;
-            const resultadoJsonEl = document.getElementById('resultado-json');
-            const resultadoContainerEl = document.getElementById('resultado');
-            
-            resultadoJsonEl.textContent = 'Processando...';
-            resultadoContainerEl.className = ''; // Reseta classes de erro
+# Caminho para o script pln_processor.py
+PLN_PROCESSOR_SCRIPT_PATH = os.path.join(BASE_APP_DIR, "src", "main", "resources", "pln_processor.py")
+# Diretório de trabalho para o pln_processor.py (onde ele espera seus .txt, .json)
+CWD_FOR_PLN = os.path.join(BASE_APP_DIR, "src", "main", "resources")
 
-            try {
-                const response = await fetch('/processar_pergunta_pln', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ pergunta: pergunta }),
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    resultadoJsonEl.textContent = JSON.stringify(data, null, 2);
-                } else {
-                    resultadoJsonEl.textContent = JSON.stringify(data, null, 2);
-                    resultadoContainerEl.classList.add('error');
-                }
-            } catch (error) {
-                resultadoJsonEl.textContent = 'Erro na comunicação com o servidor: ' + error.message;
-                resultadoContainerEl.classList.add('error');
-            }
-        });
-    </script>
-</body>
-</html>
-"""
+# Diretório dos templates SPARQL (.txt)
+SPARQL_TEMPLATES_DIR = os.path.join(BASE_APP_DIR, "src", "main", "resources", "Templates")
 
+# Caminho para o arquivo de ontologia principal (agora na raiz /app)
+ONTOLOGY_FILE_PATH = os.path.join(BASE_APP_DIR, "ontologiaB3.ttl")
+
+# Carregar a ontologia uma vez quando a aplicação inicia
+graph = Graph()
+if os.path.exists(ONTOLOGY_FILE_PATH):
+    flask_logger.info(f"Carregando ontologia de: {ONTOLOGY_FILE_PATH}")
+    try:
+        graph.parse(ONTOLOGY_FILE_PATH, format="turtle")
+        flask_logger.info(f"Ontologia carregada com {len(graph)} triplas.")
+    except Exception as e:
+        flask_logger.error(f"Erro CRÍTICO ao carregar ontologia: {e}. A aplicação pode não funcionar corretamente.")
+else:
+    flask_logger.error(f"ARQUIVO DE ONTOLOGIA NÃO ENCONTRADO EM: {ONTOLOGY_FILE_PATH}. As consultas SPARQL falharão.")
+
+
+# --- ROTA PARA SERVIR O HTML DA INTERFACE PRINCIPAL ---
 @app.route('/', methods=['GET'])
 def index():
-    return HTML_FORM
+    # Seu index2.html está em src/main/resources/static/
+    # O static_folder foi definido na instanciação do Flask.
+    flask_logger.info(f"Tentando servir: {app.static_folder} / index2.html")
+    try:
+        return send_from_directory(app.static_folder, 'index2.html')
+    except Exception as e:
+        flask_logger.error(f"Erro ao tentar servir o index2.html: {e}")
+        return "Erro ao carregar a interface principal. Verifique os logs do servidor.", 500
 
-@app.route('/processar_pergunta_pln', methods=['POST'])
-def processar_pergunta_pln_endpoint():
+# --- ENDPOINT PRINCIPAL DE PROCESSAMENTO ---
+@app.route('/processar_pergunta', methods=['POST'])
+def processar_pergunta_completa():
     data = request.get_json()
     if not data or 'pergunta' not in data:
-        return jsonify({"erro": "Pergunta não fornecida no corpo JSON"}), 400
+        return jsonify({"erro": "Pergunta não fornecida no corpo JSON", "sparqlQuery": "N/A"}), 400
     
     pergunta_usuario = data['pergunta']
-    
-    # Garante que a variável de ambiente PYTHONUNBUFFERED seja passada, se definida.
-    # Outras variáveis de ambiente importantes para o spaCy/torch também serão herdadas.
-    env_vars = dict(os.environ)
+    flask_logger.info(f"Recebida pergunta: '{pergunta_usuario}'")
 
+    # 1. Chamar o PLN Processor
+    pln_output_json = None
+    output_str_pln = ""
     try:
-        process = subprocess.run(
+        flask_logger.info(f"Chamando PLN: python {PLN_PROCESSOR_SCRIPT_PATH} '{pergunta_usuario}' com CWD: {CWD_FOR_PLN}")
+        process_pln = subprocess.run(
             ['python', PLN_PROCESSOR_SCRIPT_PATH, pergunta_usuario],
             capture_output=True,
             text=True,
-            check=False, # Mudamos para False para capturar a saída mesmo se der erro
+            check=False, 
             cwd=CWD_FOR_PLN,
-            env=env_vars
+            env=dict(os.environ) # Passa o ambiente atual para o subprocesso
         )
         
-        # Tenta parsear a saída JSON do script, seja sucesso ou erro JSON do PLN
-        # O pln_processor.py já formata seus erros como JSON e usa sys.exit(0) ou sys.exit(1)
-        try:
-            resultado_pln = json.loads(process.stdout if process.stdout else process.stderr)
-            # Retorna o status code do processo PLN se for um erro estruturado dele
-            if process.returncode != 0 and "erro" in resultado_pln:
-                 return jsonify(resultado_pln), 400 # ou 500, dependendo da semântica do erro PLN
-            elif process.returncode != 0: # Erro não JSON do PLN
-                return jsonify({
-                    "erro": "PLN falhou com saída não-JSON",
-                    "pln_stdout": process.stdout,
-                    "pln_stderr": process.stderr,
-                    "pln_exit_code": process.returncode
-                }), 500
-            return jsonify(resultado_pln) # Sucesso
-            
-        except json.JSONDecodeError:
-            # Se a saída não for JSON, retorna como erro genérico do PLN
-            return jsonify({
-                "erro": "PLN retornou saída não-JSON ou vazia.",
-                "pln_stdout": process.stdout,
-                "pln_stderr": process.stderr,
-                "pln_exit_code": process.returncode
-            }), 500
+        output_str_pln = process_pln.stdout if process_pln.stdout.strip() else process_pln.stderr
+        flask_logger.debug(f"Saída bruta PLN (stdout): {process_pln.stdout[:500]}...")
+        flask_logger.debug(f"Saída bruta PLN (stderr): {process_pln.stderr[:500]}...")
+        flask_logger.info(f"Código de saída do PLN: {process_pln.returncode}")
 
-    except Exception as e_geral:
-        return jsonify({"erro": f"Erro inesperado no servidor ao chamar PLN: {str(e_geral)}"}), 500
+        if not output_str_pln.strip():
+            flask_logger.error("PLN não produziu saída (stdout/stderr).")
+            return jsonify({"erro": "PLN não produziu saída.", "sparqlQuery": "N/A (Erro no PLN)"}), 500
 
-# Para Gunicorn, ele não usa esta parte. Mas é bom para teste local.
+        pln_output_json = json.loads(output_str_pln)
+        
+        if "erro" in pln_output_json:
+            flask_logger.error(f"Erro estruturado retornado pelo PLN: {pln_output_json['erro']}")
+            # Se o PLN tem um erro, passamos para o cliente. O HTTP status pode ser 400 ou 200 dependendo
+            # se consideramos um erro do PLN como um erro do cliente ou um resultado "esperado" do PLN.
+            # Vamos usar 400 se for um erro claro do PLN.
+            return jsonify(pln_output_json), 400 # Passa o JSON de erro do PLN
+
+        if "template_nome" not in pln_output_json or "mapeamentos" not in pln_output_json:
+            flask_logger.error(f"Saída do PLN inesperada (faltando template_nome ou mapeamentos): {pln_output_json}")
+            return jsonify({"erro": "Saída do PLN inválida ou incompleta.", "sparqlQuery": "N/A"}), 500
+
+    except json.JSONDecodeError as jde:
+        flask_logger.error(f"Erro ao decodificar JSON do PLN: {jde}. Saída PLN que causou erro: {output_str_pln}")
+        return jsonify({"erro": "Erro ao decodificar saída do PLN.", "sparqlQuery": "N/A (Erro no PLN)", "debug_pln_output": output_str_pln}), 500
+    except Exception as e_pln:
+        flask_logger.error(f"Erro genérico ao executar PLN: {e_pln}", exc_info=True)
+        return jsonify({"erro": f"Erro crítico ao executar o processador PLN: {str(e_pln)}", "sparqlQuery": "N/A (Erro no PLN)"}), 500
+
+    template_nome = pln_output_json.get("template_nome")
+    mapeamentos = pln_output_json.get("mapeamentos", {})
+    flask_logger.info(f"PLN retornou: template='{template_nome}', mapeamentos='{mapeamentos}'")
+
+    # 2. Carregar e Preencher Template SPARQL
+    sparql_query_string_final = "Consulta SPARQL não pôde ser gerada."
+    sparql_query_template_content = "Template SPARQL não carregado." # Para debug em caso de falha
+    try:
+        template_filename = f"{template_nome.replace(' ', '_')}.txt"
+        template_file_path = os.path.join(SPARQL_TEMPLATES_DIR, template_filename)
+        flask_logger.info(f"Tentando carregar template SPARQL de: {template_file_path}")
+
+        if not os.path.exists(template_file_path):
+            flask_logger.error(f"Arquivo de template SPARQL não encontrado: {template_file_path}")
+            return jsonify({"erro": f"Template SPARQL '{template_filename}' não encontrado.", "sparqlQuery": "N/A"}), 500
+
+        with open(template_file_path, 'r', encoding='utf-8') as f_template:
+            sparql_query_template_content = f_template.read()
+        
+        sparql_query_string_final = sparql_query_template_content
+        
+        for placeholder_key, valor_raw in mapeamentos.items():
+            valor_sparql_formatado = ""
+            valor_str_raw = str(valor_raw) # Converte para string para manipulação
+
+            if placeholder_key == "#DATA#":
+                valor_sparql_formatado = f'"{valor_str_raw}"^^xsd:date'
+            elif placeholder_key == "#ENTIDADE_NOME#":
+                valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
+                valor_sparql_formatado = f'"{valor_escapado}"'
+            elif placeholder_key == "#VALOR_DESEJADO#":
+                # Assumindo que pln_processor retorna o nome local da propriedade
+                # e que o prefixo b3: é o correto para todas elas.
+                if ":" not in valor_str_raw and not valor_str_raw.startswith("<"):
+                    valor_sparql_formatado = f'b3:{valor_str_raw}'
+                else:
+                    valor_sparql_formatado = valor_str_raw # Já formatado (IRI ou prefixed name)
+            elif placeholder_key == "#SETOR#":
+                valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
+                valor_sparql_formatado = f'"{valor_escapado}"'
+            else:
+                flask_logger.warning(f"Placeholder não tratado explicitamente '{placeholder_key}'. Usando como string literal.")
+                valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
+                valor_sparql_formatado = f'"{valor_escapado}"'
+
+            flask_logger.info(f"Substituindo '{placeholder_key}' por '{valor_sparql_formatado}' no template SPARQL.")
+            sparql_query_string_final = sparql_query_string_final.replace(str(placeholder_key), valor_sparql_formatado)
+        
+        flask_logger.info(f"Consulta SPARQL final gerada: \n{sparql_query_string_final}")
+
+    except Exception as e_template:
+        flask_logger.error(f"Erro ao processar template SPARQL: {e_template}", exc_info=True)
+        return jsonify({"erro": f"Erro ao gerar consulta SPARQL: {str(e_template)}", "sparqlQuery": sparql_query_template_content}), 500
+
+    # 3. Executar Consulta SPARQL
+    resposta_formatada_final = "Não foi possível executar a consulta ou não houve resultados."
+    try:
+        if not graph or len(graph) == 0: # Verifica se a ontologia foi carregada
+            flask_logger.error("Ontologia não carregada ou vazia, não é possível executar a consulta.")
+            return jsonify({"erro": "Falha ao carregar a ontologia base ou está vazia.", "sparqlQuery": sparql_query_string_final}), 500
+
+        # Definindo namespaces comuns que podem ser usados nas queries, embora prepareQuery deva lidar com os do template.
+        # Se seus templates usam prefixos não declarados neles mesmos, adicione-os aqui.
+        # ns_b3 = Namespace("https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#")
+        # ns_xsd = Namespace("http://www.w3.org/2001/XMLSchema#")
+        # initNs={'b3': ns_b3, 'xsd': ns_xsd}
+        # query_obj = prepareQuery(sparql_query_string_final, initNs=initNs)
+        
+        query_obj = prepareQuery(sparql_query_string_final) # prepareQuery deve pegar os PREFIX do template
+        
+        flask_logger.info("Executando consulta SPARQL...")
+        qres = graph.query(query_obj)
+        
+        resultados_temp_list = []
+        if qres.type == 'SELECT':
+            for row in qres:
+                # Converte cada valor da tupla para string, tratando None
+                # row.asdict() é mais robusto se disponível e os nomes das vars são desejados
+                try:
+                    resultados_temp_list.append(row.asdict())
+                except AttributeError: # Fallback se row.asdict() não estiver disponível (versões antigas de rdflib?)
+                    result_row_dict = {}
+                    for i, var_name in enumerate(qres.vars):
+                        result_row_dict[str(var_name)] = str(row[i]) if row[i] is not None else None
+                    resultados_temp_list.append(result_row_dict)
+
+            if not resultados_temp_list:
+                resposta_formatada_final = "Nenhum resultado encontrado." # String simples para o JS tratar
+            else:
+                resposta_formatada_final = json.dumps(resultados_temp_list) # Envia como string JSON de uma lista de dicts
+        
+        elif qres.type == 'ASK':
+            resposta_formatada_final = json.dumps({"resultado_ask": bool(qres.askAnswer)}) # Garante booleano
+        
+        elif qres.type == 'CONSTRUCT' or qres.type == 'DESCRIBE':
+            # Serializa o grafo resultante para Turtle
+            # Adiciona um prefixo para melhor legibilidade se não houver um padrão
+            # graph.bind("b3", Namespace("https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#"))
+            resposta_formatada_final = qres.serialize(format='turtle')
+            if not resposta_formatada_final.strip(): # Se a string for vazia
+                resposta_formatada_final = "Nenhum resultado para CONSTRUCT/DESCRIBE."
+        else:
+            resposta_formatada_final = f"Tipo de consulta não suportado para formatação padrão: {qres.type}"
+
+        flask_logger.info(f"Consulta SPARQL executada. Tipo de resultado: {qres.type}. Resposta (início): {str(resposta_formatada_final)[:200]}...")
+
+    except Exception as e_sparql:
+        flask_logger.error(f"Erro ao executar consulta SPARQL: {e_sparql}", exc_info=True)
+        flask_logger.error(f"Consulta que falhou: \n{sparql_query_string_final}")
+        return jsonify({"erro": f"Erro ao executar consulta SPARQL: {str(e_sparql)}", "sparqlQuery": sparql_query_string_final}), 500
+
+    # 4. Retornar tudo para o frontend
+    return jsonify({
+        "sparqlQuery": sparql_query_string_final,
+        "resposta": resposta_formatada_final 
+    })
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    # Esta parte só roda se você executar "python web_app.py" diretamente.
+    # O Gunicorn não usa esta parte.
+    # Para desenvolvimento local, use uma porta diferente se o serviço Java já usa 8080.
+    local_port = int(os.environ.get("PORT", 5001)) 
+    flask_logger.info(f"Iniciando servidor Flask de desenvolvimento em http://0.0.0.0:{local_port}")
+    app.run(host='0.0.0.0', port=local_port, debug=True)
