@@ -5,6 +5,7 @@ import os
 from rdflib import Graph
 from rdflib.plugins.sparql import prepareQuery
 import logging
+import sys # <--- ADICIONE ESTA LINHA
 
 # Configuração do logging do Flask (faça isso ANTES de criar o 'app')
 # Para ver logs no Render, eles precisam ir para stdout/stderr
@@ -46,8 +47,6 @@ else:
 # --- ROTA PARA SERVIR O HTML DA INTERFACE PRINCIPAL ---
 @app.route('/', methods=['GET'])
 def index():
-    # Seu index2.html está em src/main/resources/static/
-    # O static_folder foi definido na instanciação do Flask.
     flask_logger.info(f"Tentando servir: {app.static_folder} / index2.html")
     try:
         return send_from_directory(app.static_folder, 'index2.html')
@@ -76,7 +75,7 @@ def processar_pergunta_completa():
             text=True,
             check=False, 
             cwd=CWD_FOR_PLN,
-            env=dict(os.environ) # Passa o ambiente atual para o subprocesso
+            env=dict(os.environ)
         )
         
         output_str_pln = process_pln.stdout if process_pln.stdout.strip() else process_pln.stderr
@@ -92,10 +91,7 @@ def processar_pergunta_completa():
         
         if "erro" in pln_output_json:
             flask_logger.error(f"Erro estruturado retornado pelo PLN: {pln_output_json['erro']}")
-            # Se o PLN tem um erro, passamos para o cliente. O HTTP status pode ser 400 ou 200 dependendo
-            # se consideramos um erro do PLN como um erro do cliente ou um resultado "esperado" do PLN.
-            # Vamos usar 400 se for um erro claro do PLN.
-            return jsonify(pln_output_json), 400 # Passa o JSON de erro do PLN
+            return jsonify(pln_output_json), 400
 
         if "template_nome" not in pln_output_json or "mapeamentos" not in pln_output_json:
             flask_logger.error(f"Saída do PLN inesperada (faltando template_nome ou mapeamentos): {pln_output_json}")
@@ -114,7 +110,7 @@ def processar_pergunta_completa():
 
     # 2. Carregar e Preencher Template SPARQL
     sparql_query_string_final = "Consulta SPARQL não pôde ser gerada."
-    sparql_query_template_content = "Template SPARQL não carregado." # Para debug em caso de falha
+    sparql_query_template_content = "Template SPARQL não carregado."
     try:
         template_filename = f"{template_nome.replace(' ', '_')}.txt"
         template_file_path = os.path.join(SPARQL_TEMPLATES_DIR, template_filename)
@@ -131,7 +127,7 @@ def processar_pergunta_completa():
         
         for placeholder_key, valor_raw in mapeamentos.items():
             valor_sparql_formatado = ""
-            valor_str_raw = str(valor_raw) # Converte para string para manipulação
+            valor_str_raw = str(valor_raw)
 
             if placeholder_key == "#DATA#":
                 valor_sparql_formatado = f'"{valor_str_raw}"^^xsd:date'
@@ -139,12 +135,10 @@ def processar_pergunta_completa():
                 valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
                 valor_sparql_formatado = f'"{valor_escapado}"'
             elif placeholder_key == "#VALOR_DESEJADO#":
-                # Assumindo que pln_processor retorna o nome local da propriedade
-                # e que o prefixo b3: é o correto para todas elas.
                 if ":" not in valor_str_raw and not valor_str_raw.startswith("<"):
                     valor_sparql_formatado = f'b3:{valor_str_raw}'
                 else:
-                    valor_sparql_formatado = valor_str_raw # Já formatado (IRI ou prefixed name)
+                    valor_sparql_formatado = valor_str_raw
             elif placeholder_key == "#SETOR#":
                 valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
                 valor_sparql_formatado = f'"{valor_escapado}"'
@@ -165,18 +159,11 @@ def processar_pergunta_completa():
     # 3. Executar Consulta SPARQL
     resposta_formatada_final = "Não foi possível executar a consulta ou não houve resultados."
     try:
-        if not graph or len(graph) == 0: # Verifica se a ontologia foi carregada
+        if not graph or len(graph) == 0:
             flask_logger.error("Ontologia não carregada ou vazia, não é possível executar a consulta.")
             return jsonify({"erro": "Falha ao carregar a ontologia base ou está vazia.", "sparqlQuery": sparql_query_string_final}), 500
-
-        # Definindo namespaces comuns que podem ser usados nas queries, embora prepareQuery deva lidar com os do template.
-        # Se seus templates usam prefixos não declarados neles mesmos, adicione-os aqui.
-        # ns_b3 = Namespace("https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#")
-        # ns_xsd = Namespace("http://www.w3.org/2001/XMLSchema#")
-        # initNs={'b3': ns_b3, 'xsd': ns_xsd}
-        # query_obj = prepareQuery(sparql_query_string_final, initNs=initNs)
         
-        query_obj = prepareQuery(sparql_query_string_final) # prepareQuery deve pegar os PREFIX do template
+        query_obj = prepareQuery(sparql_query_string_final)
         
         flask_logger.info("Executando consulta SPARQL...")
         qres = graph.query(query_obj)
@@ -184,30 +171,25 @@ def processar_pergunta_completa():
         resultados_temp_list = []
         if qres.type == 'SELECT':
             for row in qres:
-                # Converte cada valor da tupla para string, tratando None
-                # row.asdict() é mais robusto se disponível e os nomes das vars são desejados
                 try:
                     resultados_temp_list.append(row.asdict())
-                except AttributeError: # Fallback se row.asdict() não estiver disponível (versões antigas de rdflib?)
+                except AttributeError: 
                     result_row_dict = {}
                     for i, var_name in enumerate(qres.vars):
                         result_row_dict[str(var_name)] = str(row[i]) if row[i] is not None else None
                     resultados_temp_list.append(result_row_dict)
 
             if not resultados_temp_list:
-                resposta_formatada_final = "Nenhum resultado encontrado." # String simples para o JS tratar
+                resposta_formatada_final = "Nenhum resultado encontrado."
             else:
-                resposta_formatada_final = json.dumps(resultados_temp_list) # Envia como string JSON de uma lista de dicts
+                resposta_formatada_final = json.dumps(resultados_temp_list)
         
         elif qres.type == 'ASK':
-            resposta_formatada_final = json.dumps({"resultado_ask": bool(qres.askAnswer)}) # Garante booleano
+            resposta_formatada_final = json.dumps({"resultado_ask": bool(qres.askAnswer)})
         
         elif qres.type == 'CONSTRUCT' or qres.type == 'DESCRIBE':
-            # Serializa o grafo resultante para Turtle
-            # Adiciona um prefixo para melhor legibilidade se não houver um padrão
-            # graph.bind("b3", Namespace("https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#"))
             resposta_formatada_final = qres.serialize(format='turtle')
-            if not resposta_formatada_final.strip(): # Se a string for vazia
+            if not resposta_formatada_final.strip():
                 resposta_formatada_final = "Nenhum resultado para CONSTRUCT/DESCRIBE."
         else:
             resposta_formatada_final = f"Tipo de consulta não suportado para formatação padrão: {qres.type}"
@@ -226,9 +208,6 @@ def processar_pergunta_completa():
     })
 
 if __name__ == '__main__':
-    # Esta parte só roda se você executar "python web_app.py" diretamente.
-    # O Gunicorn não usa esta parte.
-    # Para desenvolvimento local, use uma porta diferente se o serviço Java já usa 8080.
     local_port = int(os.environ.get("PORT", 5001)) 
     flask_logger.info(f"Iniciando servidor Flask de desenvolvimento em http://0.0.0.0:{local_port}")
     app.run(host='0.0.0.0', port=local_port, debug=True)
