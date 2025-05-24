@@ -2,28 +2,12 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX stock: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#> 
 
-SELECT DISTINCT ?valor
+SELECT (COUNT(DISTINCT ?empresa) AS ?totalEmpresasNoSetor) (SAMPLE(?setorLabel) AS ?setorLabelMostrado)
 WHERE {
   ?empresa stock:atuaEm ?setorUri .
   ?setorUri rdfs:label ?setorLabel .
-  # DEVE ESTAR ASSIM:
+  # O placeholder #SETOR_REGEX_PATTERN# será substituído pelo web_app.py
+  # com o padrão como "energia.*el[eé]trica" (com aspas)
   FILTER(REGEX(STR(?setorLabel), #SETOR_REGEX_PATTERN#, "i")) 
-
-  OPTIONAL { 
-    ?empresa stock:temValorMobiliarioNegociado ?vmOpt .
-    ?vmOpt stock:representadoPor ?codOpt .
-    ?codOpt stock:ticker ?tickerViaVm .
-  }
-  OPTIONAL {
-    ?empresa stock:representadoPor ?codDirOpt .
-    ?codDirOpt stock:ticker ?tickerViaDireto .
-  }
-  
-  BIND(COALESCE(?tickerViaVm, ?tickerViaDireto) AS ?tickerBruto)
-  FILTER(BOUND(?tickerBruto)) 
-  
-  FILTER REGEX(STR(?tickerBruto), "^[A-Z]{4}[0-9]{1,2}$", "i") 
-  BIND(?tickerBruto AS ?valor) 
 }
-ORDER BY ?valor
-LIMIT 50
+GROUP BY ?setorLabelMostrado # Necessário por causa do SAMPLE, mas como só esperamos um tipo de setor, deve funcionar
