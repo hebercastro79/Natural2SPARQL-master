@@ -4,6 +4,9 @@
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix stock: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix b3:    <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#> . 
+
+# ... (resto da sua ontologia como estava) ...
 
 rdf:rest  rdf:type          rdf:Property , rdfs:Resource ;
         rdfs:domain         rdf:List ;
