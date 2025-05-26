@@ -80,7 +80,7 @@ def normalizar_para_regex_pattern(texto_setor_bruto):
                                                  .replace("u", "[uúùûü]") \
                                                  .replace("c", "[cç]")
             palavras_para_join.append(palavra_flex_acentos)
-        padrao_regex_final = ".*".join(palavras_para_join) # Ex: servicos.*financeiros
+        padrao_regex_final = ".*".join(palavras_para_join)
         
     return padrao_regex_final
 
@@ -156,7 +156,7 @@ def processar_pergunta_completa():
             mapeamentos["#SETOR_REGEX_PATTERN#"] = setor_regex_pattern
         
         for placeholder_key, valor_raw in mapeamentos.items():
-            valor_sparql_formatado = ""
+            valor_sparql_formatado = "" # Inicializa para garantir que seja definido
             valor_str_raw = str(valor_raw)
 
             if placeholder_key == "#DATA#":
@@ -170,14 +170,13 @@ def processar_pergunta_completa():
                 else:
                     valor_sparql_formatado = valor_str_raw
             elif placeholder_key == "#SETOR#": 
-                if template_nome == "Template 3A" and "#SETOR_REGEX_PATTERN#" in sparql_query_string_final:
+                if template_nome == "Template 3A" and "#SETOR_REGEX_PATTERN#" in sparql_query_string_final: # Verifica se o template usa o regex
                     flask_logger.debug(f"Ignorando substituição direta de #SETOR# pois #SETOR_REGEX_PATTERN# é usado para Template 3A.")
                     continue 
-                else: # Para outros templates, ou se Template 3A não usa #SETOR_REGEX_PATTERN#
+                else: 
                     valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
                     valor_sparql_formatado = f'"{valor_escapado}"'
             elif placeholder_key == "#SETOR_REGEX_PATTERN#":
-                # O valor já é o padrão regex. PRECISA ser envolto em aspas para a função REGEX do SPARQL.
                 padrao_regex_escapado_para_string_sparql = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
                 valor_sparql_formatado = f'"{padrao_regex_escapado_para_string_sparql}"'
             else:
@@ -185,11 +184,15 @@ def processar_pergunta_completa():
                 valor_escapado = valor_str_raw.replace('\\', '\\\\').replace('"', '\\"')
                 valor_sparql_formatado = f'"{valor_escapado}"'
 
-            if valor_sparql_formatado is not None: # Verifica se há um valor formatado (pode ser string vazia para regex)
+            # Apenas substitui se valor_sparql_formatado foi definido (não é mais None)
+            # E também garante que a substituição ocorra para #SETOR_REGEX_PATTERN# mesmo que seu valor seja uma string vazia (improvável com a normalização)
+            if valor_sparql_formatado is not None: 
                 flask_logger.info(f"Substituindo '{placeholder_key}' por '{valor_sparql_formatado}' no template SPARQL.")
                 sparql_query_string_final = sparql_query_string_final.replace(str(placeholder_key), valor_sparql_formatado)
-            else: # Se não for #SETOR# (que pode ser pulado) e não tiver valor, é um problema
-                flask_logger.warning(f"Placeholder '{placeholder_key}' não teve valor formatado e não foi substituído.")
+            # Removido o else que logava aviso de não substituição se não for #SETOR#, 
+            # pois o 'continue' para #SETOR# já cuida disso.
+            # Se um placeholder diferente de #SETOR# não tiver valor_sparql_formatado,
+            # a string original do placeholder permanecerá, o que pode causar erro SPARQL.
         
         flask_logger.info(f"Consulta SPARQL final gerada: \n{sparql_query_string_final}")
     except Exception as e_template:
@@ -208,20 +211,44 @@ def processar_pergunta_completa():
         
         resultados_temp_list = []
         if qres.type == 'SELECT':
-            for row in qres:
+            # --- ADICIONADO DEBUG DA CONTAGEM AQUI ---
+            all_rows_from_select = list(qres) 
+            flask_logger.info(f"--- {template_nome}: Número de linhas/resultados SELECT encontrados: {len(all_rows_from_select)} ---")
+            # --- FIM DO DEBUG DA CONTAGEM ---
+
+            for row in all_rows_from_select: # Itera sobre a lista já materializada
                 try:
-                    resultados_temp_list.append(row.asdict())
+                    # Tenta usar asdict() se for um resultado da query original
+                    # Se for da query de contagem (Teste 3A.S1), asdict() pode não ter 'valor'
+                    # Ajuste para as chaves específicas da query que está sendo executada
+                    if 'valor' in row: # Para a query original que seleciona ?valor
+                         resultados_temp_list.append(row.asdict())
+                    elif 'empresa' in row and 'sl' in row: # Para a query de teste 3A.S1
+                         resultados_temp_list.append({"empresa": str(row.empresa), "sl": str(row.sl)})
+                    else: # Fallback mais genérico se as chaves esperadas não estiverem
+                         resultados_temp_list.append(row.asdict()) # Tenta asdict() de qualquer forma
                 except AttributeError: 
                     result_row_dict = {}
-                    for i, var_name in enumerate(qres.vars):
+                    # qres.vars pode não estar disponível se o gerador foi consumido por list(qres)
+                    # Seria melhor pegar as vars antes de converter para lista, ou iterar qres uma vez
+                    # Para simplificar, vamos tentar pegar as chaves da primeira linha se possível
+                    if all_rows_from_select and hasattr(all_rows_from_select[0], 'labels'):
+                        current_vars = all_rows_from_select[0].labels
+                    else:
+                        current_vars = qres.vars # Pode já estar vazio se qres foi consumido
+
+                    for i, var_name in enumerate(current_vars):
                         result_row_dict[str(var_name)] = str(row[i]) if row[i] is not None else None
                     resultados_temp_list.append(result_row_dict)
+
             if not resultados_temp_list:
                 resposta_formatada_final = "Nenhum resultado encontrado."
             else:
                 resposta_formatada_final = json.dumps(resultados_temp_list)
+        
         elif qres.type == 'ASK':
             resposta_formatada_final = json.dumps({"resultado_ask": bool(qres.askAnswer)})
+        
         elif qres.type == 'CONSTRUCT' or qres.type == 'DESCRIBE':
             resposta_formatada_final = qres.serialize(format='turtle')
             if not resposta_formatada_final.strip():

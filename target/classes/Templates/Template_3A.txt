@@ -1,32 +1,8 @@
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX stock: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#> 
-
-SELECT DISTINCT ?valor # ?valor aqui será o ticker da empresa
+SELECT DISTINCT ?empresa (SAMPLE(STR(?setorLabel)) as ?sl)
 WHERE {
-  # 1. Encontrar empresas em um setor que contenha "energia elétrica" no label
   ?empresa stock:atuaEm ?setorUri .
   ?setorUri rdfs:label ?setorLabel .
-  FILTER(CONTAINS(LCASE(STR(?setorLabel)), LCASE("Energia Elétrica"))) 
-
-  # 2. Tentar obter o ticker da empresa de duas maneiras (OPCIONAL)
-  OPTIONAL { 
-    ?empresa stock:temValorMobiliarioNegociado ?vmOpt .
-    ?vmOpt stock:representadoPor ?codOpt .
-    ?codOpt stock:ticker ?tickerViaVm .
-  }
-  OPTIONAL {
-    ?empresa stock:representadoPor ?codDirOpt . # Empresas podem ser diretamente representadas por um código
-    ?codDirOpt stock:ticker ?tickerViaDireto .
-  }
-  
-  # 3. Combinar os tickers encontrados e garantir que pelo menos um foi encontrado
-  BIND(COALESCE(?tickerViaVm, ?tickerViaDireto) AS ?tickerBruto)
-  FILTER(BOUND(?tickerBruto)) 
-
-  # 4. Garantir que o ticker encontrado tem o formato padrão
-  FILTER REGEX(STR(?tickerBruto), "^[A-Z]{4}[0-9]{1,2}$", "i") 
-  BIND(?tickerBruto AS ?valor) # Renomeia ?tickerBruto para ?valor para o SELECT
+  FILTER(REGEX(STR(?setorLabel), "energia.*el[eé]trica", "i")) 
 }
-ORDER BY ?valor
-LIMIT 50
+GROUP BY ?empresa 
+LIMIT 100
