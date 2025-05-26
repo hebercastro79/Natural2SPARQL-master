@@ -1,25 +1,18 @@
-PREFIX b3: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#>
 PREFIX stock: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#> 
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+# PREFIX b3: <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#> (Pode deixar comentado ou remover)
 
 SELECT DISTINCT ?individualTicker
 WHERE {
-  
-  ?mainEntity rdfs:label #ENTIDADE_NOME# .
-
-  
+  ?mainEntity rdfs:label #ENTIDADE_NOME# . 
   ?mainEntity stock:representadoPor ?codigoCombinadoInst . 
   ?codigoCombinadoInst stock:ticker ?combinedTickerString .
-
   
-  ?anyCode rdf:type b3:Codigo_Negociacao . 
+  ?anyCode rdf:type <https://dcm.ffclrp.usp.br/lssb/stock-market-ontology#Codigo_Negociacao> . # <--- IRI COMPLETO AQUI
   ?anyCode stock:ticker ?individualTicker . 
-
   
   FILTER (BOUND(?combinedTickerString) && CONTAINS(?combinedTickerString, ?individualTicker))
-
-  
   FILTER REGEX(?individualTicker, "^[A-Z]{4}[0-9]{1,2}$")
 }
 LIMIT 20
