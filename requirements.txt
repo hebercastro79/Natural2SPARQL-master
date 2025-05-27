@@ -1,8 +1,0 @@
-Flask
-gunicorn
-spacy
-# transformers (se seu pln_processor.py ou modelos spaCy os exigirem explicitamente)
-# torch      (mesma consideração acima)
-# nltk       (se seu pln_processor.py usa)
-rdflib==6.1.1 
-pyparsing==3.0.9
